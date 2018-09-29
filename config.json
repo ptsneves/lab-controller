@@ -1,0 +1,71 @@
+{
+  "camera" : {
+    "power" : {
+      "type" : "serial",
+      "baud" : "57600",
+      "reset-prompt" : "\r",
+      "device" : "/dev/ttyUSB1",
+      "eof-character" : "\r",
+      "command" : {
+        "on" : {
+          "send" : "CAMERA:ON",
+          "expect" : "Success: CAMERA:ON"
+        },
+        "off" : {
+          "send" : "CAMERA:OFF",
+          "expect" : "Success: CAMERA:OFF"
+        }
+      }
+    },
+    "communications" : {
+    }
+  },
+  "odroid-xu4" : {
+    "power" : {
+      "type" : "serial",
+      "baud" : "57600",
+      "reset-prompt" : "\r",
+      "eof-character" : "\r",
+      "device" : "ttyUSB1",
+      "command" : {
+        "on" : {
+          "send" : "BOARD:ON",
+          "expect" : "BOARD:ON"
+        },
+        "off" : {
+          "send" : "BOARD:OFF",
+          "expect" : "BOARD:OFF"
+        }
+      }
+    },
+    "communications" : {
+      "serial" : {
+        "device" : "/dev/ttyUSB1",
+        "type" : "serial",
+        "baud" : "115200"
+      },
+      "ssh" : { 
+        "address" : "drotag",
+        "user" : "root"
+      }
+    }
+  },
+  "arietta" : {
+    "power" : {
+      "type" : "usb",
+      "usb-address" : "1-2.3",
+      "usb-port" : "4"
+    },
+    "communications" : {
+      "serial" : {
+        "device" : "/dev/ttyAriettaConsole",
+        "type" : "serial",
+        "baud" : "115200"
+      },
+      "ssh" : {
+        "address" : "drotag",
+        "user" : "root"
+      }
+    }
+  }
+}
