@@ -40,7 +40,7 @@
     },
     "communications" : {
       "serial" : {
-        "device" : "/dev/ttyUSB1",
+        "device" : "/dev/ttyOdroid",
         "type" : "serial",
         "baud" : "115200"
       },
