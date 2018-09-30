@@ -41,7 +41,7 @@ def do_power_usb(action, json_power):
    raise RuntimeError("'usb-address' and 'usb-port' are required for usb power control")
 
   uhubctl_conn = pexpect.spawnu('uhubctl', ['-a', action, '-l', json_power['usb-address'], '-p',
-      json_power['usb-port'], '-e'])
+      json_power['usb-port']])
 
   uhubctl_conn.expect_exact('Sent power {} request'.format(action))
   uhubctl_conn.expect_exact('New status for hub {}'.format(json_power['usb-address']))
