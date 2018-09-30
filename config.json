@@ -4,7 +4,7 @@
       "type" : "serial",
       "baud" : "115200",
       "reset-prompt" : "\r",
-      "device" : "/dev/ttyUSB1",
+      "device" : "/dev/ttyRelayBoard",
       "eof-character" : "\r",
       "command" : {
         "on" : {
@@ -26,7 +26,7 @@
       "baud" : "115200",
       "reset-prompt" : "\r",
       "eof-character" : "\r",
-      "device" : "ttyUSB1",
+      "device" : "/dev/ttyRelayBoard",
       "command" : {
         "on" : {
           "send" : "BOARD:ON",
