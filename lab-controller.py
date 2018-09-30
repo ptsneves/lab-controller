@@ -69,6 +69,9 @@ def do_power(appliance, action, json_conf):
   else:
     raise RuntimeError("type {} is not supported".format(json_conf[appliance]['power']['type']))
 
+def get_serial_device(appliance, appliance_section, json_conf):
+  pass
+
 def main():
   json_config_path = "./config.json"
   if not os.path.exists(json_config_path):
@@ -78,13 +81,20 @@ def main():
     json_conf = json.load(json_file)
 
   parser = argparse.ArgumentParser(description='Controls the laboratory relay board and usb hubs.')
+  arg_mutex = parser.add_mutually_exclusive_group(required=True)
 
+  arg_mutex.add_argument("-p", "--power", choices = ['on', 'off'])
   parser.add_argument("-d", "--appliance", choices = json_conf.keys(), required=True)
-  parser.add_argument("-p", "--power", choices = ['on', 'off'])
-  parser.add_argument('-c', '--config', help='Define the configuration file to use', default='config.json')
+  arg_mutex.add_argument('--get-serial')
+
+
   args = parser.parse_args()
-  if (args.power):
+  if args.power:
     do_power(args.appliance, args.power, json_conf)
+  elif args.get_serial:
+    get_serial_device(args.appliance, args.get_serial_device, json_conf)
+  else:
+    raise ValueError("Impossible: Mandatory options not passed in arguments")
 
 try:
   main()
