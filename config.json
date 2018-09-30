@@ -2,7 +2,7 @@
   "camera" : {
     "power" : {
       "type" : "serial",
-      "baud" : "57600",
+      "baud" : "115200",
       "reset-prompt" : "\r",
       "device" : "/dev/ttyUSB1",
       "eof-character" : "\r",
@@ -23,7 +23,7 @@
   "odroid-xu4" : {
     "power" : {
       "type" : "serial",
-      "baud" : "57600",
+      "baud" : "115200",
       "reset-prompt" : "\r",
       "eof-character" : "\r",
       "device" : "ttyUSB1",
