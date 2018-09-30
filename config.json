@@ -44,7 +44,7 @@
         "type" : "serial",
         "baud" : "115200"
       },
-      "ssh" : { 
+      "ssh" : {
         "address" : "drotag",
         "user" : "root"
       }
