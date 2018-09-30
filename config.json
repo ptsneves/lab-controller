@@ -67,5 +67,14 @@
         "user" : "root"
       }
     }
+  },
+  "pixhawk" : {
+    "power" : {
+      "type" : "usb",
+      "usb-address" : "1-2",
+      "usb-port" : "4"
+    },
+    "communications" : {
+    }
   }
 }
