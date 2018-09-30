@@ -1,9 +1,4 @@
 SUBSYSTEMS=="usb", ATTR{idVendor}=="2109", ATTR{idProduct}=="2811", MODE="0666"
 
-KERNEL=="ttyUSB[0-9]*", SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTR{idVendor}=="2109", ATTR{idProduct}=="2811", MODE="0666", ENV{HU3770V1_HUB}="1"
-
 KERNEL=="tty[A-Z]*[0-9]*", SUBSYSTEM=="tty", KERNELS=="1-2.3.3:1.0", SYMLINK+="ttyRelayBoard"
 KERNEL=="tty[A-Z]*[0-9]*", SUBSYSTEM=="tty", KERNELS=="1-2.3.2:1.0", SYMLINK+="ttyAriettaConsole"
-
-#ENV{HU3770V1_HUB}=="1", KERNEL=="ttyUSB[0-9]*", SUBSYSTEM=="tty", KERNELS=="1-2.3.3:1.0", SYMLINK+="ttyrelay"
-#ENV{HU3770V1_HUB}=="1", KERNEL=="ttyUSB[0-9]*", SUBSYSTEM=="tty", KERNELS=="1-2.3.2:1.0", SYMLINK+="ttyarietta"
