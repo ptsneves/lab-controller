@@ -13,9 +13,25 @@ def intersect(l1, l2):
   intersection_len = len(set(l1) & set(l2))
   return intersection_len == expected_len
 
+def check_serial_settings(json_appliance_section):
+  if not intersect(['device', 'baud'], json_appliance_section.keys()):
+    raise RuntimeError("Make sure that 'device' and 'baud' settings are available in appliance section")
+
+def check_applicance(appliance, json_conf):
+  if appliance not in json_conf.keys():
+    raise RuntimeError("appliance {} not found in configuration.".format(appliance))
+
+def check_appliance_section(appliance_section, json_appliance):
+  if appliance_section  not in json_appliance.keys():
+    raise RuntimeError("Cannot find {} configurations".format(appliance_section))
+
+def check_device_type(json_appliance_section):
+  if 'type' not in json_appliance_section.keys():
+    raise RuntimeError("type not defined in appliance section")
+
+
 def do_power_serial(action, json_power):
-  if not intersect(['device', 'baud'], json_power.keys()):
-    raise RuntimeError("Make sure that 'device' and 'baud' settings are available for power")
+  check_serial_settings(json_power)
 
   power_cmd = "socat -t0 STDIO,raw,echo=0,escape=0x03,nonblock=1 file:{},b{},cs8,parenb=0,cstopb=0,clocal=0,raw,echo=0".format(json_power['device'], json_power['baud'])
   serial_power_conn = pexpect.spawnu(power_cmd, timeout=2, env=os.environ, logfile=sys.stdout)
@@ -51,16 +67,10 @@ def do_power_usb(action, json_power):
   if action == "on":
     uhubctl_conn.expect('  Port {}: [0-9]{{4}} power'.format(json_power['usb-port']))
 
-
 def do_power(appliance, action, json_conf):
-  if appliance not in json_conf.keys():
-    raise RuntimeError("appliance {} not found in configuration.".format(appliance))
-
-  if 'power' not in json_conf[appliance].keys():
-    raise RuntimeError("{} does not have power configurations".format(appliance))
-
-  if 'type' not in json_conf[appliance]['power'].keys():
-    raise RuntimeError("{} power does not have type defined".format(appliance))
+  check_applicance(appliance, json_conf)
+  check_appliance_section('power', json_conf[appliance])
+  check_device_type(json_conf[appliance]['power'])
 
   if json_conf[appliance]['power']['type'] == 'serial':
     do_power_serial(action, json_conf[appliance]['power'])
