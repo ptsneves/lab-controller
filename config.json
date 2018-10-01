@@ -5,6 +5,7 @@
         "type" : "serial",
         "baud" : "115200",
         "reset-prompt" : "\r",
+        "reset-expect" : "Welcome. Commands available are",
         "device" : "/dev/ttyRelayBoard",
         "eof-character" : "\r",
         "command" : {
@@ -28,6 +29,7 @@
         "type" : "serial",
         "baud" : "115200",
         "reset-prompt" : "\r",
+        "reset-expect" : "Welcome. Commands available are",
         "eof-character" : "\r",
         "device" : "/dev/ttyRelayBoard",
         "command" : {
