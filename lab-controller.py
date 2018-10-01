@@ -69,15 +69,19 @@ def do_power_usb(action, json_power):
 
 def do_power(appliance, action, json_conf):
   check_applicance(appliance, json_conf)
-  check_appliance_section('power', json_conf[appliance])
-  check_device_type(json_conf[appliance]['power'])
+  json_appliance = json_conf[appliance]
 
-  if json_conf[appliance]['power']['type'] == 'serial':
-    do_power_serial(action, json_conf[appliance]['power'])
-  elif json_conf[appliance]['power']['type'] == 'usb':
-    do_power_usb(action, json_conf[appliance]['power'])
+  check_appliance_section('power', json_appliance)
+  json_appliance_section = json_appliance['power']
+
+  check_device_type(json_appliance_section)
+
+  if json_appliance_section['type'] == 'serial':
+    do_power_serial(action, json_appliance_section)
+  elif json_appliance_section['type'] == 'usb':
+    do_power_usb(action, json_appliance_section)
   else:
-    raise RuntimeError("type {} is not supported".format(json_conf[appliance]['power']['type']))
+    raise RuntimeError("type {} is not supported".format(json_appliance_section['type']))
 
 def get_serial_device(appliance, appliance_section, json_conf):
   pass
