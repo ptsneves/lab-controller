@@ -113,6 +113,8 @@ def get_serial_device(appliance, appliance_section, json_conf):
     check_device_type(json_communication)
 
     if json_communication['type'] == 'serial':
+      if found_serial:
+        raise RuntimeError("Found duplicated serial device for same appliance section. Correct this.")
       check_serial_settings(json_communication)
       device_data_result = json_communication
       found_serial = True
