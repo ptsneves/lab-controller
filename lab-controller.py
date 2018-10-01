@@ -119,6 +119,9 @@ def get_serial_device(appliance, appliance_section, json_conf):
   if not found_serial:
     raise RuntimeError("Cannot get serial device for a non serial appliance section")
 
+def expect_on_serial(appliance, json_expect, json_conf):
+  pass
+
 def main():
   json_config_path = "./config.json"
   if not os.path.exists(json_config_path):
@@ -133,13 +136,15 @@ def main():
   arg_mutex.add_argument("-p", "--power", choices = ['on', 'off'])
   parser.add_argument("-d", "--appliance", choices = json_conf.keys(), required=True)
   arg_mutex.add_argument('--get-serial-device')
-
+  arg_mutex.add_argument('--json-expect-on-serial')
 
   args = parser.parse_args()
   if args.power:
     do_power(args.appliance, args.power, json_conf)
   elif args.get_serial_device:
     get_serial_device(args.appliance, args.get_serial_device, json_conf)
+  elif args.json_expect_on_serial:
+    expect_on_serial(args.appliance, args.json_expect_on_serial, json_conf)
   else:
     raise ValueError("Impossible: Mandatory options not passed in arguments")
 
