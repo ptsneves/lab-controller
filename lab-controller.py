@@ -102,6 +102,7 @@ def do_power(appliance, action, json_conf):
 
 def get_serial_device(appliance, appliance_section, json_conf):
   found_serial = False
+  device_data_result = None
   check_applicance(appliance, json_conf)
   json_appliance = json_conf[appliance]
 
@@ -113,11 +114,13 @@ def get_serial_device(appliance, appliance_section, json_conf):
 
     if json_communication['type'] == 'serial':
       check_serial_settings(json_communication)
-      print(json.dumps(json_communication, sort_keys=True, indent=2))
+      device_data_result = json_communication
       found_serial = True
 
   if not found_serial:
     raise RuntimeError("Cannot get serial device for a non serial appliance section")
+
+  return device_data_result
 
 def expect_on_serial(appliance, json_expect, json_conf):
   pass
@@ -142,7 +145,8 @@ def main():
   if args.power:
     do_power(args.appliance, args.power, json_conf)
   elif args.get_serial_device:
-    get_serial_device(args.appliance, args.get_serial_device, json_conf)
+    result_json = get_serial_device(args.appliance, args.get_serial_device, json_conf)
+    print(json.dumps(result_json, sort_keys=True, indent=2))
   elif args.json_expect_on_serial:
     expect_on_serial(args.appliance, args.json_expect_on_serial, json_conf)
   else:
