@@ -34,7 +34,7 @@ def do_power_serial(action, json_power):
   check_serial_settings(json_power)
 
   power_cmd = "socat -t0 STDIO,raw,echo=0,escape=0x03,nonblock=1 file:{},b{},cs8,parenb=0,cstopb=0,clocal=0,raw,echo=0".format(json_power['device'], json_power['baud'])
-  serial_power_conn = pexpect.spawnu(power_cmd, timeout=2, env=os.environ, logfile=sys.stdout)
+  serial_power_conn = pexpect.spawnu(power_cmd, timeout=2, env=os.environ, codec_errors='ignore')
   if "reset-prompt" in json_power.keys():
     serial_power_conn.send(json_power["reset-prompt"])
     if "reset-expect" in json_power.keys():
