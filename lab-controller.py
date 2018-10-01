@@ -124,8 +124,38 @@ def get_serial_device(appliance, appliance_section, json_conf):
 
   return device_data_result
 
+
+def check_expect_instance(json_expect_instance):
+  if not intersect(["text", "timeout"], json_expect_instance.keys()):
+    raise RuntimeError("'text' and 'timeout' data is mandatory for each expect call")
+  if not json_expect_instance["timeout"].isdigit():
+    raise RuntimeError("'timeout' is not a number")
+
+def check_json_expect(json_expect):
+  if not "expect" in json_expect.keys():
+    raise RuntimeError("At least one expect root key is required in json")
+
+  json_expect_array = json_expect["expect"]
+  for json_expect_instance in json_expect_array:
+    print(json.dumps(json_expect_instance))
+    check_expect_instance(json_expect_instance)
+
 def expect_on_serial(appliance, json_expect, json_conf):
-  pass
+  json_serial = get_serial_device(appliance, "communications", json_conf)
+  check_json_expect(json_expect)
+
+  serial_cmd = "socat -t0 STDIO,raw,echo=0,escape=0x03,nonblock=1 file:{},b{},cs8,parenb=0,cstopb=0,clocal=0,raw,echo=0".format(json_serial['device'], json_serial['baud'])
+  print(serial_cmd)
+  serial_conn = pexpect.spawnu(serial_cmd, timeout=2, env=os.environ, codec_errors='ignore', logfile=sys.stdout)
+
+  if "reset-prompt" in json_serial.keys():
+    serial_conn.send(json_serial["reset-prompt"])
+    if "reset-expect" in json_serial.keys():
+      serial_conn.expect(json_serial["reset-expect"])
+
+  json_expect_array = json_expect["expect"]
+  for expect_entry in json_expect_array:
+    serial_conn.expect(expect_entry['text'], float(expect_entry['timeout']))
 
 def main():
   json_config_path = "./config.json"
@@ -150,7 +180,8 @@ def main():
     result_json = get_serial_device(args.appliance, args.get_serial_device, json_conf)
     print(json.dumps(result_json, sort_keys=True, indent=2))
   elif args.json_expect_on_serial:
-    expect_on_serial(args.appliance, args.json_expect_on_serial, json_conf)
+    json_expect_on_serial = json.loads(args.json_expect_on_serial)
+    expect_on_serial(args.appliance, json_expect_on_serial, json_conf)
   else:
     raise ValueError("Impossible: Mandatory options not passed in arguments")
 
