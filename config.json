@@ -45,6 +45,7 @@
         "baud" : "115200"
       },
       "ssh" : {
+        "type" : "ssh",
         "address" : "drotag",
         "user" : "root"
       }
@@ -63,6 +64,7 @@
         "baud" : "115200"
       },
       "ssh" : {
+        "type" : "ssh",
         "address" : "drotag",
         "user" : "root"
       }
