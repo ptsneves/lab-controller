@@ -68,20 +68,35 @@ def do_power_usb(action, json_power):
     uhubctl_conn.expect('  Port {}: [0-9]{{4}} power'.format(json_power['usb-port']))
 
 def do_power(appliance, action, json_conf):
+  appliance_section = 'power'
+
   check_applicance(appliance, json_conf)
   json_appliance = json_conf[appliance]
+  check_appliance_section(appliance_section, json_appliance)
+  json_appliance_section = json_appliance[appliance_section]
 
-  check_appliance_section('power', json_appliance)
-  json_appliance_section = json_appliance['power']
+  ran_power = False
 
-  check_device_type(json_appliance_section)
+  for communication_method in json_appliance_section:
+    json_communication_method = json_appliance_section[communication_method]
+    check_device_type(json_communication_method)
+    if json_communication_method['type'] == 'serial':
+      try:
+        do_power_serial(action, json_communication_method)
+        ran_power = True
+      except RuntimeError as e:
+        print(e)
+    elif json_communication_method['type'] == 'usb':
+      try:
+        do_power_usb(action, json_communication_method)
+        ran_power = True
+      except RuntimeError as e:
+        print(e)
+    else:
+      raise RuntimeError("type {} is not supported".format(json_communication_method['type']))
 
-  if json_appliance_section['type'] == 'serial':
-    do_power_serial(action, json_appliance_section)
-  elif json_appliance_section['type'] == 'usb':
-    do_power_usb(action, json_appliance_section)
-  else:
-    raise RuntimeError("type {} is not supported".format(json_appliance_section['type']))
+  if not ran_power:
+    raise RuntimeError("Did not successfully turn power on for appliance {}".format(appliance))
 
 def get_serial_device(appliance, appliance_section, json_conf):
   pass
