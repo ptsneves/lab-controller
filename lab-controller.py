@@ -99,7 +99,23 @@ def do_power(appliance, action, json_conf):
     raise RuntimeError("Did not successfully turn power on for appliance {}".format(appliance))
 
 def get_serial_device(appliance, appliance_section, json_conf):
-  pass
+  found_serial = False
+  check_applicance(appliance, json_conf)
+  json_appliance = json_conf[appliance]
+
+  check_appliance_section(appliance_section, json_appliance)
+  json_appliance_section = json_appliance[appliance_section]
+  for com_type in json_appliance_section:
+    json_communication = json_appliance_section[com_type]
+    check_device_type(json_communication)
+
+    if json_communication['type'] == 'serial':
+      check_serial_settings(json_communication)
+      print(json.dumps(json_communication))
+      found_serial = True
+
+  if not found_serial:
+    raise RuntimeError("Cannot get serial device for a non serial appliance section")
 
 def main():
   json_config_path = "./config.json"
@@ -114,13 +130,13 @@ def main():
 
   arg_mutex.add_argument("-p", "--power", choices = ['on', 'off'])
   parser.add_argument("-d", "--appliance", choices = json_conf.keys(), required=True)
-  arg_mutex.add_argument('--get-serial')
+  arg_mutex.add_argument('--get-serial-device')
 
 
   args = parser.parse_args()
   if args.power:
     do_power(args.appliance, args.power, json_conf)
-  elif args.get_serial:
+  elif args.get_serial_device:
     get_serial_device(args.appliance, args.get_serial_device, json_conf)
   else:
     raise ValueError("Impossible: Mandatory options not passed in arguments")
