@@ -113,7 +113,7 @@ def get_serial_device(appliance, appliance_section, json_conf):
 
     if json_communication['type'] == 'serial':
       check_serial_settings(json_communication)
-      print(json.dumps(json_communication))
+      print(json.dumps(json_communication, sort_keys=True, indent=2))
       found_serial = True
 
   if not found_serial:
