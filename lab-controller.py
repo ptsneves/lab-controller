@@ -189,3 +189,4 @@ try:
   main()
 except RuntimeError as e:
   print(e)
+  exit(1)
