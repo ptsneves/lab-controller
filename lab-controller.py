@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import pexpect
 import os
 import sys
-import time
 import argparse
 import json
 import pexpect
