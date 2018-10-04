@@ -35,6 +35,21 @@ def do_power_group(group_json, action, global_json_conf):
   for device in group_json["devices"]:
     do_power(device, action, global_json_conf)
 
+def check_expect_instance(json_expect_instance):
+  if not intersect(["text", "timeout"], json_expect_instance.keys()):
+    raise RuntimeError("'text' and 'timeout' data is mandatory for each expect call")
+  if not json_expect_instance["timeout"].isdigit():
+    raise RuntimeError("'timeout' is not a number")
+
+def check_json_expect(json_expect):
+  if not "expect" in json_expect.keys():
+    raise RuntimeError("At least one expect root key is required in json")
+
+  json_expect_array = json_expect["expect"]
+  for json_expect_instance in json_expect_array:
+    print(json.dumps(json_expect_instance))
+    check_expect_instance(json_expect_instance)
+
 def do_host_command(execute, expects = [], shell = False, exact = True):
   if shell:
     execute = "bash -c '{}'".format(execute)
@@ -174,21 +189,6 @@ def get_serial_device(appliance, appliance_section, json_conf):
     raise RuntimeError("Cannot get serial device for a non serial appliance section")
 
   return device_data_result
-
-def check_expect_instance(json_expect_instance):
-  if not intersect(["text", "timeout"], json_expect_instance.keys()):
-    raise RuntimeError("'text' and 'timeout' data is mandatory for each expect call")
-  if not json_expect_instance["timeout"].isdigit():
-    raise RuntimeError("'timeout' is not a number")
-
-def check_json_expect(json_expect):
-  if not "expect" in json_expect.keys():
-    raise RuntimeError("At least one expect root key is required in json")
-
-  json_expect_array = json_expect["expect"]
-  for json_expect_instance in json_expect_array:
-    print(json.dumps(json_expect_instance))
-    check_expect_instance(json_expect_instance)
 
 def expect_on_serial(appliance, json_expect, json_conf):
   json_serial = get_serial_device(appliance, "communications", json_conf)
