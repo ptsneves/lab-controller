@@ -55,6 +55,18 @@ def check_usb_json(json_usb):
   if not intersect(['usb-address', 'usb-port'], json_usb):
     raise RuntimeError("'usb-address' and 'usb-port' are required for usb power control")
 
+def check_command(json_communication):
+  if not intersect(["command"], json_communication.keys()):
+    raise RuntimeError("'command' dictionary or 'eof-character' not found in power configuration")
+
+  if not intersect(['on', 'off'], json_communication['command'].keys()):
+    raise RuntimeError("'on' or 'off' configurations were not found. Please add them")
+
+  for action in json_communication['command'].keys():
+    for json_action_command in json_communication['command'][action]:
+      if "send" not in json_action_command.keys():
+        raise RuntimeError("send string is mandatory for all actions")
+
 def do_host_command(execute, expects = [], shell = False, exact = True):
   if shell:
     execute = "bash -c '{}'".format(execute)
@@ -72,24 +84,19 @@ def do_host_command(execute, expects = [], shell = False, exact = True):
 
 def do_power_serial(action, json_power):
   check_serial_settings(json_power)
+  check_command(json_power)
 
-  power_cmd = "socat -t0 STDIO,raw,echo=0,escape=0x03,nonblock=1 file:{},b{},cs8,parenb=0,cstopb=0,clocal=0,raw,echo=0".format(json_power['device'], json_power['baud'])
+  power_cmd = "socat -t0 STDIO,raw,echo=0,escape=0x03,nonblock=1 " \
+      "file:{},b{},cs8,parenb=0,cstopb=0,clocal=0,raw,echo=0".format(json_power['device'],
+       json_power['baud'])
+
   serial_power_conn = pexpect.spawnu(power_cmd, timeout=2, env=os.environ, codec_errors='ignore')
   if "reset-prompt" in json_power.keys():
     serial_power_conn.send(json_power["reset-prompt"])
     if "reset-expect" in json_power.keys():
       serial_power_conn.expect(json_power["reset-expect"])
 
-  if not intersect(["command"], json_power.keys()):
-    raise RuntimeError("'command' dictionary or 'eof-character' not found in power configuration")
-
-  if not intersect(['on', 'off'], json_power['command'].keys()):
-    raise RuntimeError("'on' or 'off' configurations were not found. Please add them")
-
   for json_action_command in json_power['command'][action]:
-    if "send" not in json_action_command.keys():
-      raise RuntimeError("send string is mandatory for all actions")
-
     serial_power_conn.send('{}{}'.format(json_action_command['send'], json_power["eof-character"]))
 
     if "expect" in json_action_command.keys():
@@ -112,21 +119,14 @@ def do_power_usb(action, json_power):
   do_host_command(execute, expects, exact = False)
 
 def do_power_command(action, json_power):
-  if "command" not in json_power.keys():
-    raise RuntimeError("Host directive requires a command directive")
+  check_command(json_power)
 
   if "shell" not in json_power.keys():
     raise RuntimeError("Host commands need to specify if commands are shell")
 
   shell = json_power["shell"]
 
-  json_command = json_power["command"]
-  if not intersect(['on', 'off'], json_command):
-    raise RuntimeError("'on' or 'off' configurations were not found. Please add them")
-
-  json_action_commands = json_command[action]
-
-  for json_action_command in json_action_commands:
+  for json_action_command in json_power["command"][action]:
     expect = []
     if "expect" in json_action_command.keys():
       expect = json_action_command["expect"]
