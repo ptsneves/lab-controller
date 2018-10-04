@@ -67,6 +67,14 @@ def do_power_usb(action, json_power):
   if action == "on":
     uhubctl_conn.expect('  Port {}: [0-9]{{4}} power'.format(json_power['usb-port']))
 
+def do_power_group(group_json, action, global_json_conf):
+  print(group_json)
+  if "devices" not in group_json.keys():
+    raise RuntimeError("Found a group with no devices. Please correct the type or add devices")
+
+  for device in group_json["devices"]:
+    do_power(device, action, global_json_conf)
+
 def do_power(appliance, action, json_conf):
   appliance_section = 'power'
 
@@ -92,6 +100,9 @@ def do_power(appliance, action, json_conf):
         ran_power = True
       except RuntimeError as e:
         print(e)
+    elif json_communication_method['type'] == 'group':
+        do_power_group(json_communication_method, action, json_conf)
+        ran_power = True
     else:
       raise RuntimeError("type {} is not supported".format(json_communication_method['type']))
 

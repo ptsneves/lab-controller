@@ -1,4 +1,16 @@
 {
+  "drotagx-test" : {
+    "power" : {
+      "group" : {
+        "type" : "group",
+        "devices" : [
+          "camera",
+          "arietta",
+          "pixhawk"
+        ]
+      }
+    }
+  },
   "camera" : {
     "power" : {
       "serial" : {
