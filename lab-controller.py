@@ -52,7 +52,7 @@ def check_json_expect(json_expect):
     check_expect_instance(json_expect_instance)
 
 def check_usb_json(json_usb):
-  if not intersect(['usb-address', 'usb-port'], json_power):
+  if not intersect(['usb-address', 'usb-port'], json_usb):
     raise RuntimeError("'usb-address' and 'usb-port' are required for usb power control")
 
 def do_host_command(execute, expects = [], shell = False, exact = True):
