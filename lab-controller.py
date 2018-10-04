@@ -12,8 +12,9 @@ def intersect(l1, l2):
   return intersection_len == expected_len
 
 def check_serial_settings(json_appliance_section):
-  if not intersect(['device', 'baud'], json_appliance_section.keys()):
-    raise RuntimeError("Make sure that 'device' and 'baud' settings are available in appliance section")
+  if not intersect(['device', 'baud', 'eof-character'], json_appliance_section.keys()):
+    raise RuntimeError("Make sure that 'device' 'baud' and 'eof-character' settings are"
+      " available in appliance section")
 
 def check_applicance(appliance, json_conf):
   if appliance not in json_conf.keys():
@@ -79,7 +80,7 @@ def do_power_serial(action, json_power):
     if "reset-expect" in json_power.keys():
       serial_power_conn.expect(json_power["reset-expect"])
 
-  if not intersect(["command", 'eof-character'], json_power.keys()):
+  if not intersect(["command"], json_power.keys()):
     raise RuntimeError("'command' dictionary or 'eof-character' not found in power configuration")
 
   if not intersect(['on', 'off'], json_power['command'].keys()):
