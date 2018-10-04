@@ -21,14 +21,18 @@
         "device" : "/dev/ttyRelayBoard",
         "eof-character" : "\r",
         "command" : {
-          "on" : {
-            "send" : "CAMERA:ON",
-            "expect" : "Success: CAMERA:ON"
-          },
-          "off" : {
-            "send" : "CAMERA:OFF",
-            "expect" : "Success: CAMERA:OFF"
-          }
+          "on" : [
+            {
+              "send" : "CAMERA:ON",
+              "expect" : "Success: CAMERA:ON"
+            }
+          ],
+          "off" : [
+            {
+              "send" : "CAMERA:OFF",
+              "expect" : "Success: CAMERA:OFF"
+            }
+          ]
         }
       }
     },
@@ -45,14 +49,18 @@
         "eof-character" : "\r",
         "device" : "/dev/ttyRelayBoard",
         "command" : {
-          "on" : {
-            "send" : "BOARD:ON",
-            "expect" : "BOARD:ON"
-          },
-          "off" : {
-            "send" : "BOARD:OFF",
-            "expect" : "BOARD:OFF"
-          }
+          "on" : [
+            {
+              "send" : "BOARD:ON",
+              "expect" : "BOARD:ON"
+            }
+          ],
+          "off" : [
+            {
+              "send" : "BOARD:OFF",
+              "expect" : "BOARD:OFF"
+            }
+          ]
         }
       }
     },

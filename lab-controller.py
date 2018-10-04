@@ -44,13 +44,14 @@ def do_power_serial(action, json_power):
   if not intersect(['on', 'off'], json_power['command'].keys()):
     raise RuntimeError("'on' or 'off' configurations were not found. Please add them")
 
-  if "send" not in json_power['command'][action].keys():
-    raise RuntimeError("send string is mandatory for all actions")
+  for json_action_command in json_power['command'][action]:
+    if "send" not in json_action_command.keys():
+      raise RuntimeError("send string is mandatory for all actions")
 
-  serial_power_conn.send('{}{}'.format(json_power['command'][action]['send'], json_power["eof-character"]))
+    serial_power_conn.send('{}{}'.format(json_action_command['send'], json_power["eof-character"]))
 
-  if "expect" in json_power['command'][action].keys():
-    serial_power_conn.expect(json_power['command'][action]['expect'])
+    if "expect" in json_action_command.keys():
+      serial_power_conn.expect(json_action_command['expect'])
 
 def do_power_usb(action, json_power):
   if not intersect(['usb-address', 'usb-port'], json_power):
