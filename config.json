@@ -79,6 +79,23 @@
   },
   "arietta" : {
     "power" : {
+      "host" : {
+        "type" : "host",
+        "shell" : "True",
+        "command" : {
+          "on" : [
+            {
+              "send" : "echo 1",
+              "expect" : "1"
+            }
+          ],
+          "off" : [
+            {
+              "send" : "echo 2"
+            }
+          ]
+        }
+      },
       "usb" : {
         "type" : "usb",
         "usb-address" : "1-2.3",

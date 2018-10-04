@@ -27,6 +27,28 @@ def check_device_type(json_appliance_section):
   if 'type' not in json_appliance_section.keys():
     raise RuntimeError("type not defined in appliance section")
 
+def do_power_group(group_json, action, global_json_conf):
+  print(group_json)
+  if "devices" not in group_json.keys():
+    raise RuntimeError("Found a group with no devices. Please correct the type or add devices")
+
+  for device in group_json["devices"]:
+    do_power(device, action, global_json_conf)
+
+def do_host_command(execute, expects = [], shell = False, exact = True):
+  if shell:
+    execute = "bash -c '{}'".format(execute)
+
+  command_conn = pexpect.spawnu(execute)
+  if expects != []:
+    for expect in expects:
+      if exact:
+        command_conn.expect_exact(expect)
+      else:
+        command_conn.expect(expect)
+
+  if command_conn.wait() != 0:
+    raise RuntimeError("Host Command did not execute successfully: {}".format(execute))
 
 def do_power_serial(action, json_power):
   check_serial_settings(json_power)
@@ -68,13 +90,27 @@ def do_power_usb(action, json_power):
   if action == "on":
     uhubctl_conn.expect('  Port {}: [0-9]{{4}} power'.format(json_power['usb-port']))
 
-def do_power_group(group_json, action, global_json_conf):
-  print(group_json)
-  if "devices" not in group_json.keys():
-    raise RuntimeError("Found a group with no devices. Please correct the type or add devices")
+def do_power_command(action, json_power):
+  if "command" not in json_power.keys():
+    raise RuntimeError("Host directive requires a command directive")
 
-  for device in group_json["devices"]:
-    do_power(device, action, global_json_conf)
+  if "shell" not in json_power.keys():
+    raise RuntimeError("Host commands need to specify if commands are shell")
+
+  shell = json_power["shell"]
+
+  json_command = json_power["command"]
+  if not intersect(['on', 'off'], json_command):
+    raise RuntimeError("'on' or 'off' configurations were not found. Please add them")
+
+  json_action_commands = json_command[action]
+
+  for json_action_command in json_action_commands:
+    expect = []
+    if "expect" in json_action_command.keys():
+      expect = json_action_command["expect"]
+
+    do_host_command(json_action_command["send"], expect, shell)
 
 def do_power(appliance, action, json_conf):
   appliance_section = 'power'
@@ -101,6 +137,9 @@ def do_power(appliance, action, json_conf):
         ran_power = True
       except RuntimeError as e:
         print(e)
+    elif json_communication_method['type'] == 'host':
+        do_power_command(action, json_communication_method)
+        ran_power = True
     elif json_communication_method['type'] == 'group':
         do_power_group(json_communication_method, action, json_conf)
         ran_power = True
@@ -133,7 +172,6 @@ def get_serial_device(appliance, appliance_section, json_conf):
     raise RuntimeError("Cannot get serial device for a non serial appliance section")
 
   return device_data_result
-
 
 def check_expect_instance(json_expect_instance):
   if not intersect(["text", "timeout"], json_expect_instance.keys()):
