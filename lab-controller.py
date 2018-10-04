@@ -79,16 +79,18 @@ def do_power_usb(action, json_power):
   if not intersect(['usb-address', 'usb-port'], json_power):
    raise RuntimeError("'usb-address' and 'usb-port' are required for usb power control")
 
-  uhubctl_conn = pexpect.spawnu('uhubctl', ['-a', action, '-l', json_power['usb-address'], '-p',
-      json_power['usb-port']])
+  execute = 'uhubctl -a {} -l {} -p {}'.format(action, json_power['usb-address'], json_power['usb-port'])
 
-  uhubctl_conn.expect_exact('Sent power {} request'.format(action))
-  uhubctl_conn.expect_exact('New status for hub {}'.format(json_power['usb-address']))
+  expects = []
+  expects.append('Sent power {} request'.format(action))
+  expects.append('New status for hub {}'.format(json_power['usb-address']))
 
   if action == "off":
-    uhubctl_conn.expect_exact('  Port {}: 0000 {}'.format(json_power['usb-port'], action))
+    expects.append('  Port {}: 0000 {}'.format(json_power['usb-port'], action))
   if action == "on":
-    uhubctl_conn.expect('  Port {}: [0-9]{{4}} power'.format(json_power['usb-port']))
+    expects.append('  Port {}: [0-9]{{4}} power'.format(json_power['usb-port']))
+
+  do_host_command(execute, expects, exact = False)
 
 def do_power_command(action, json_power):
   if "command" not in json_power.keys():
