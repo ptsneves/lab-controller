@@ -67,19 +67,44 @@ def check_command(json_communication):
       if "send" not in json_action_command.keys():
         raise RuntimeError("send string is mandatory for all actions")
 
-def do_host_command(execute, expects = [], shell = False, exact = True):
+def do_execute(execute, shell):
   if shell:
     execute = "bash -c '{}'".format(execute)
 
-  command_conn = pexpect.spawnu(execute, env = os.environ, codec_errors = 'ignore')
-  if expects != []:
-    for expect in expects:
-      if exact:
-        command_conn.expect_exact(expect)
-      else:
-        command_conn.expect(expect)
+  return pexpect.spawnu(execute, env = os.environ, codec_errors = 'ignore')
 
-  if command_conn.wait() != 0:
+def do_expect(conn, expect = None, match_type = None, timeout = 2):
+  if expect:
+    if match_type == "exact":
+      conn.expect_exact(expect, timeout)
+    else:
+      conn.expect(expect, timeout)
+
+def do_send(conn, text = None):
+  if text:
+    conn.send(text)
+
+def do_host_command(execute = "", shell = False, io_list = []):
+  exec_conn = do_execute(execute, shell)
+  for io in io_list:
+    if "send" in io.keys():
+      do_send(exec_conn, io["send"])
+
+    if "expect" in io.keys():
+      expect = io["expect"]
+      text = expect["text"]
+
+      match_type = None
+      if "match-type" in expect:
+        match_type = expect["match-type"]
+
+      timeout = 2
+      if "timeout" in expect:
+        timeout = expect["timeout"]
+
+      do_expect(exec_conn, text, match_type, timeout)
+
+  if exec_conn.wait() != 0:
     raise RuntimeError("Host Command did not execute successfully: {}".format(execute))
 
 def do_power_serial(action, json_power):
@@ -91,32 +116,40 @@ def do_power_serial(action, json_power):
        json_power['baud'])
 
   serial_power_conn = pexpect.spawnu(power_cmd, timeout=2, env=os.environ, codec_errors='ignore')
+  io_list = []
+  reset_dict = {}
   if "reset-prompt" in json_power.keys():
-    serial_power_conn.send(json_power["reset-prompt"])
+    reset_dict["send"] = json_power["reset-prompt"]
     if "reset-expect" in json_power.keys():
-      serial_power_conn.expect(json_power["reset-expect"])
+      reset_dict["expect"] = {"text" : json_power["reset-expect"], "timeout" : 2}
+
+  io_list.append(reset_dict)
 
   for json_action_command in json_power['command'][action]:
-    serial_power_conn.send('{}{}'.format(json_action_command['send'], json_power["eof-character"]))
+    user_dict = {}
+    user_dict["send"] = '{}{}'.format(json_action_command['send'], json_power["eof-character"])
 
     if "expect" in json_action_command.keys():
-      serial_power_conn.expect(json_action_command['expect'])
+      user_dict["expect"] = {"text" : json_action_command['expect'], "timeout" : 2}
+    io_list.append(user_dict)
+
+  do_host_command(serial_power_conn, False, io_list)
 
 def do_power_usb(action, json_power):
   check_usb_json(json_power)
 
   execute = 'uhubctl -a {} -l {} -p {}'.format(action, json_power['usb-address'], json_power['usb-port'])
 
-  expects = []
-  expects.append('Sent power {} request'.format(action))
-  expects.append('New status for hub {}'.format(json_power['usb-address']))
+  io_list = []
+  io_list.append({ "expect" : {"text" : 'Sent power {} request'.format(action)}})
+  io_list.append({ "expect" : {"text" : 'New status for hub {}'.format(json_power['usb-address'])}})
 
   if action == "off":
-    expects.append('  Port {}: 0000 {}'.format(json_power['usb-port'], action))
+    io_list.append({ "expect" : { "text" : '  Port {}: 0000 {}'.format(json_power['usb-port'], action)}})
   if action == "on":
-    expects.append('  Port {}: [0-9]{{4}} power'.format(json_power['usb-port']))
+    io_list.append({ "expect" : { "text" : '  Port {}: [0-9]{{4}} power'.format(json_power['usb-port'])}})
 
-  do_host_command(execute, expects, exact = False)
+  do_host_command( execute, False, io_list)
 
 def do_power_command(action, json_power):
   check_command(json_power)
@@ -131,7 +164,8 @@ def do_power_command(action, json_power):
     if "expect" in json_action_command.keys():
       expect = json_action_command["expect"]
 
-    do_host_command(json_action_command["send"], expect, shell)
+      io_entry = {"expect" : {"text" : expect, "match-type" : "exact"} }
+      do_host_command(json_action_command["send"], shell, [ io_entry ])
 
 def do_power(appliance, action, json_conf):
   appliance_section = 'power'
