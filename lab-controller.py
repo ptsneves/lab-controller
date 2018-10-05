@@ -71,7 +71,7 @@ def do_host_command(execute, expects = [], shell = False, exact = True):
   if shell:
     execute = "bash -c '{}'".format(execute)
 
-  command_conn = pexpect.spawnu(execute)
+  command_conn = pexpect.spawnu(execute, env = os.environ, codec_errors = 'ignore')
   if expects != []:
     for expect in expects:
       if exact:
