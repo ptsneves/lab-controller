@@ -16,21 +16,34 @@
       "serial" : {
         "type" : "serial",
         "baud" : "115200",
-        "reset-prompt" : "\r",
-        "reset-expect" : "Welcome. Commands available are",
         "device" : "/dev/ttyRelayBoard",
-        "eof-character" : "\r",
         "command" : {
           "on" : [
             {
-              "send" : "CAMERA:ON",
-              "expect" : "Success: CAMERA:ON"
+              "io" : [
+                {
+                  "send" : "\r",
+                  "expect" : { "text" : "Welcome. Commands available are", "timeout" : "2"}
+                },
+                {
+                  "send" : "CAMERA:ON\r",
+                  "expect" : { "text" : "Success: CAMERA:ON\r", "timeout" : "1"}
+                }
+              ]
             }
           ],
           "off" : [
             {
-              "send" : "CAMERA:OFF",
-              "expect" : "Success: CAMERA:OFF"
+              "io" : [
+                {
+                  "send" : "\r",
+                  "expect" : { "text" : "Welcome. Commands available are", "timeout" : "1"}
+                },
+                {
+                  "send" : "CAMERA:OFF\r",
+                  "expect" : { "text" : "Success: CAMERA:OFF", "timeout" : "1"}
+                }
+              ]
             }
           ]
         }
@@ -44,21 +57,34 @@
       "serial" : {
         "type" : "serial",
         "baud" : "115200",
-        "reset-prompt" : "\r",
-        "reset-expect" : "Welcome. Commands available are",
-        "eof-character" : "\r",
         "device" : "/dev/ttyRelayBoard",
         "command" : {
           "on" : [
             {
-              "send" : "BOARD:ON",
-              "expect" : "BOARD:ON"
+              "io" : [ 
+                {
+                  "send" : "\r",
+                  "expect" : { "text" : "Welcome. Commands available are", "timeout" : "1"}
+                },
+                {
+                  "send" : "BOARD:ON\r",
+                  "expect" : { "text" : "Success: BOARD:ON", "timeout" : "1"}
+                }
+              ]
             }
           ],
           "off" : [
             {
-              "send" : "BOARD:OFF",
-              "expect" : "BOARD:OFF"
+              "io" : [
+                {
+                  "send" : "\r",
+                  "expect" : { "text" : "Welcome. Commands available are", "timeout" : "1"}
+                },
+                {
+                  "send" : "BOARD:OFF\r",
+                  "expect" : { "text" : "Success: BOARD:OFF", "timeout" : 1}
+                }
+              ]
             }
           ]
         }
@@ -85,13 +111,20 @@
         "command" : {
           "on" : [
             {
-              "send" : "echo 1",
-              "expect" : "1"
+              "execute" : "echo 1",
+              "io" : [ {
+                  "expect" : { "text" : "1" }
+                }
+              ]
             }
           ],
           "off" : [
             {
-              "send" : "echo 2"
+              "execute" : "echo 2",
+              "io" : [ {
+                  "expect" : { "text" : "2" }
+                }
+              ]
             }
           ]
         }

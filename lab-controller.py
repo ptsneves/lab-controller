@@ -12,8 +12,8 @@ def intersect(l1, l2):
   return intersection_len == expected_len
 
 def check_serial_settings(json_appliance_section):
-  if not intersect(['device', 'baud', 'eof-character'], json_appliance_section.keys()):
-    raise RuntimeError("Make sure that 'device' 'baud' and 'eof-character' settings are"
+  if not intersect(['device', 'baud'], json_appliance_section.keys()):
+    raise RuntimeError("Make sure that 'device' and 'baud' settings are"
       " available in appliance section")
 
 def check_applicance(appliance, json_conf):
@@ -29,7 +29,6 @@ def check_device_type(json_appliance_section):
     raise RuntimeError("type not defined in appliance section")
 
 def do_power_group(group_json, action, global_json_conf):
-  print(group_json)
   if "devices" not in group_json.keys():
     raise RuntimeError("Found a group with no devices. Please correct the type or add devices")
 
@@ -48,12 +47,18 @@ def check_json_expect(json_expect):
 
   json_expect_array = json_expect["expect"]
   for json_expect_instance in json_expect_array:
-    print(json.dumps(json_expect_instance))
     check_expect_instance(json_expect_instance)
 
 def check_usb_json(json_usb):
   if not intersect(['usb-address', 'usb-port'], json_usb):
     raise RuntimeError("'usb-address' and 'usb-port' are required for usb power control")
+
+def check_io(json_command):
+  if "io" not in json_command.keys():
+    return
+
+  if len(json_command["io"]) == 0:
+    raise RuntimeError("io list needs to have at least one element")
 
 def check_command(json_communication):
   if not intersect(["command"], json_communication.keys()):
@@ -64,10 +69,16 @@ def check_command(json_communication):
 
   for action in json_communication['command'].keys():
     for json_action_command in json_communication['command'][action]:
-      if "send" not in json_action_command.keys():
-        raise RuntimeError("send string is mandatory for all actions")
+      if "execute" not in json_action_command.keys() and "io" not in json_action_command.keys():
+        raise RuntimeError("execute or io keys are mandatory for all actions")
 
-def do_execute(execute, shell):
+      check_io(json_action_command)
+
+def get_serial_cmd(device, baud):
+  return "socat -t0 STDIO,raw,echo=0,escape=0x03,nonblock=1 " \
+      "file:{},b{},cs8,parenb=0,cstopb=0,clocal=0,raw,echo=0".format(device, baud)
+
+def do_execute(execute, shell = False):
   if shell:
     execute = "bash -c '{}'".format(execute)
 
@@ -78,15 +89,18 @@ def do_expect(conn, expect = None, match_type = None, timeout = 2):
     if match_type == "exact":
       conn.expect_exact(expect, timeout)
     else:
-      conn.expect(expect, timeout)
+      conn.expect(expect, timeout = int(timeout))
 
 def do_send(conn, text = None):
   if text:
     conn.send(text)
 
-def do_host_command(execute = "", shell = False, io_list = []):
-  exec_conn = do_execute(execute, shell)
-  for io in io_list:
+def do_host_command(action_json, ):
+  if "execute" not in action_json.keys():
+    raise RuntimeError("'execute' directive required for command")
+
+  exec_conn = do_execute(action_json["execute"])
+  for io in action_json["io"]:
     if "send" in io.keys():
       do_send(exec_conn, io["send"])
 
@@ -104,36 +118,23 @@ def do_host_command(execute = "", shell = False, io_list = []):
 
       do_expect(exec_conn, text, match_type, timeout)
 
-  if exec_conn.wait() != 0:
+  if not exec_conn.isalive() and exec_conn.wait() != 0:
     raise RuntimeError("Host Command did not execute successfully: {}".format(execute))
 
 def do_power_serial(action, json_power):
   check_serial_settings(json_power)
   check_command(json_power)
 
-  power_cmd = "socat -t0 STDIO,raw,echo=0,escape=0x03,nonblock=1 " \
-      "file:{},b{},cs8,parenb=0,cstopb=0,clocal=0,raw,echo=0".format(json_power['device'],
-       json_power['baud'])
-
-  serial_power_conn = pexpect.spawnu(power_cmd, timeout=2, env=os.environ, codec_errors='ignore')
-  io_list = []
-  reset_dict = {}
-  if "reset-prompt" in json_power.keys():
-    reset_dict["send"] = json_power["reset-prompt"]
-    if "reset-expect" in json_power.keys():
-      reset_dict["expect"] = {"text" : json_power["reset-expect"], "timeout" : 2}
-
-  io_list.append(reset_dict)
+  power_cmd = get_serial_cmd(json_power['device'], json_power['baud'])
 
   for json_action_command in json_power['command'][action]:
-    user_dict = {}
-    user_dict["send"] = '{}{}'.format(json_action_command['send'], json_power["eof-character"])
+    if "io" not in json_action_command.keys():
+      raise RuntimeError("io section required for serial devices")
 
-    if "expect" in json_action_command.keys():
-      user_dict["expect"] = {"text" : json_action_command['expect'], "timeout" : 2}
-    io_list.append(user_dict)
+    check_io(json_action_command)
 
-  do_host_command(serial_power_conn, False, io_list)
+  json_action_command["execute"] = power_cmd
+  do_host_command(json_action_command)
 
 def do_power_usb(action, json_power):
   check_usb_json(json_power)
@@ -148,24 +149,14 @@ def do_power_usb(action, json_power):
     io_list.append({ "expect" : { "text" : '  Port {}: 0000 {}'.format(json_power['usb-port'], action)}})
   if action == "on":
     io_list.append({ "expect" : { "text" : '  Port {}: [0-9]{{4}} power'.format(json_power['usb-port'])}})
-
-  do_host_command( execute, False, io_list)
+  json_action_command = {"execute" : execute, "io" : io_list}
+  do_host_command(json_action_command)
 
 def do_power_command(action, json_power):
   check_command(json_power)
 
-  if "shell" not in json_power.keys():
-    raise RuntimeError("Host commands need to specify if commands are shell")
-
-  shell = json_power["shell"]
-
   for json_action_command in json_power["command"][action]:
-    expect = []
-    if "expect" in json_action_command.keys():
-      expect = json_action_command["expect"]
-
-      io_entry = {"expect" : {"text" : expect, "match-type" : "exact"} }
-      do_host_command(json_action_command["send"], shell, [ io_entry ])
+    do_host_command(json_action_command)
 
 def do_power(appliance, action, json_conf):
   appliance_section = 'power'
@@ -233,7 +224,6 @@ def expect_on_serial(appliance, json_expect, json_conf):
   check_json_expect(json_expect)
 
   serial_cmd = "socat -t0 STDIO,raw,echo=0,escape=0x03,nonblock=1 file:{},b{},cs8,parenb=0,cstopb=0,clocal=0,raw,echo=0".format(json_serial['device'], json_serial['baud'])
-  print(serial_cmd)
   serial_conn = pexpect.spawnu(serial_cmd, timeout=2, env=os.environ, codec_errors='ignore', logfile=sys.stdout)
 
   if "reset-prompt" in json_serial.keys():
