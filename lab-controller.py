@@ -165,11 +165,9 @@ def do_power(appliance, action, json_conf):
   json_appliance = json_conf[appliance]
   check_appliance_section(appliance_section, json_appliance)
   json_appliance_section = json_appliance[appliance_section]
-
   ran_power = False
 
-  for communication_method in json_appliance_section:
-    json_communication_method = json_appliance_section[communication_method]
+  for json_communication_method in json_appliance_section:
     check_device_type(json_communication_method)
     if json_communication_method['type'] == 'serial':
       try:
@@ -203,8 +201,7 @@ def get_serial_device(appliance, appliance_section, json_conf):
 
   check_appliance_section(appliance_section, json_appliance)
   json_appliance_section = json_appliance[appliance_section]
-  for com_type in json_appliance_section:
-    json_communication = json_appliance_section[com_type]
+  for json_communication in json_appliance_section:
     check_device_type(json_communication)
 
     if json_communication['type'] == 'serial':

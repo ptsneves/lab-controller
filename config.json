@@ -1,7 +1,7 @@
 {
   "drotagx-test" : {
-    "power" : {
-      "group" : {
+    "power" : [
+      {
         "type" : "group",
         "devices" : [
           "camera",
@@ -9,11 +9,11 @@
           "pixhawk"
         ]
       }
-    }
+    ]
   },
   "camera" : {
-    "power" : {
-      "serial" : {
+    "power" : [
+      {
         "type" : "serial",
         "baud" : "115200",
         "device" : "/dev/ttyRelayBoard",
@@ -48,13 +48,13 @@
           ]
         }
       }
-    },
+    ],
     "communications" : {
     }
   },
   "odroid-xu4" : {
-    "power" : {
-      "serial" : {
+    "power" : [
+      {
         "type" : "serial",
         "baud" : "115200",
         "device" : "/dev/ttyRelayBoard",
@@ -89,23 +89,23 @@
           ]
         }
       }
-    },
-    "communications" : {
-      "serial" : {
+    ],
+    "communications" : [
+      {
         "device" : "/dev/ttyOdroid",
         "type" : "serial",
         "baud" : "115200"
       },
-      "ssh" : {
+      {
         "type" : "ssh",
         "address" : "drotag",
         "user" : "root"
       }
-    }
+    ]
   },
   "arietta" : {
-    "power" : {
-      "host" : {
+    "power" : [
+      {
         "type" : "host",
         "shell" : "True",
         "command" : {
@@ -129,34 +129,34 @@
           ]
         }
       },
-      "usb" : {
+      {
         "type" : "usb",
         "usb-address" : "1-2.3",
         "usb-port" : "4"
       }
-    },
-    "communications" : {
-      "serial" : {
+    ],
+    "communications" : [
+      {
         "device" : "/dev/ttyAriettaConsole",
         "type" : "serial",
         "baud" : "115200"
       },
-      "ssh" : {
+      {
         "type" : "ssh",
         "address" : "drotag",
         "user" : "root"
       }
-    }
+    ]
   },
   "pixhawk" : {
-    "power" : {
-      "usb" : {
+    "power" : [
+      {
         "type" : "usb",
         "usb-address" : "1-2",
         "usb-port" : "4"
       }
-    },
-    "communications" : {
-    }
+    ],
+    "communications" : [
+    ]
   }
 }
