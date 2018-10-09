@@ -245,7 +245,7 @@ def main():
 
   arg_mutex.add_argument("-p", "--power", choices = ['on', 'off'])
   parser.add_argument("-d", "--appliance", choices = json_conf.keys(), required=True)
-  arg_mutex.add_argument('--get-serial-device')
+  arg_mutex.add_argument('--get-serial-device', choices = ['communications', 'power'])
   arg_mutex.add_argument('--json-expect-on-serial')
 
   args = parser.parse_args()
