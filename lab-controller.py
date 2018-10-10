@@ -62,7 +62,7 @@ def check_io(json_command):
 
 def check_command(json_communication):
   if not intersect(["command"], json_communication.keys()):
-    raise RuntimeError("'command' dictionary or 'eof-character' not found in power configuration")
+    raise RuntimeError("'command' dictionary not found in power configuration")
 
   if not intersect(['on', 'off'], json_communication['command'].keys()):
     raise RuntimeError("'on' or 'off' configurations were not found. Please add them")
