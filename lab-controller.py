@@ -60,6 +60,15 @@ def check_io(json_command):
   if len(json_command["io"]) == 0:
     raise RuntimeError("io list needs to have at least one element")
 
+def is_io_command(json_action_command):
+  return "io" in json_action_command.keys()
+
+def is_executable_command(json_action_command):
+  return "execute" in json_action_command.keys()
+
+def is_invalid_command(json_action_command):
+  return not is_executable_command(json_action_command) and not is_io_command(json_action_command)
+
 def check_command(json_communication):
   if not intersect(["command"], json_communication.keys()):
     raise RuntimeError("'command' dictionary not found in power configuration")
@@ -69,7 +78,7 @@ def check_command(json_communication):
 
   for action in json_communication['command'].keys():
     for json_action_command in json_communication['command'][action]:
-      if "execute" not in json_action_command.keys() and "io" not in json_action_command.keys():
+      if is_invalid_command(json_action_command):
         raise RuntimeError("execute or io keys are mandatory for all actions")
 
       check_io(json_action_command)
@@ -95,7 +104,7 @@ def do_send(conn, text = None):
   if text:
     conn.send(text)
 
-def do_host_command(action_json, ):
+def do_host_command(action_json):
   if "execute" not in action_json.keys():
     raise RuntimeError("'execute' directive required for command")
 
