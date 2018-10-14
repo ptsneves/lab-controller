@@ -108,7 +108,7 @@ def do_host_command(action_json):
   if "execute" not in action_json.keys():
     raise RuntimeError("'execute' directive required for command")
 
-  exec_conn = do_execute(action_json["execute"])
+  exec_conn = do_execute(action_json["execute"], True)
   for io in action_json["io"]:
     if "send" in io.keys():
       do_send(exec_conn, io["send"])
