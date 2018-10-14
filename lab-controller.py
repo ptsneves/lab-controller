@@ -167,7 +167,51 @@ def do_power_command(action, json_power):
   for json_action_command in json_power["command"][action]:
     do_host_command(json_action_command)
 
-def do_power(appliance, action, json_conf):
+def parse_power(json_communication_method, action):
+  ran_power = False
+  check_device_type(json_communication_method)
+  if json_communication_method['type'] == 'serial':
+    try:
+      do_power_serial(action, json_communication_method)
+      ran_power = True
+    except RuntimeError as e:
+      print(e)
+  elif json_communication_method['type'] == 'usb':
+    try:
+      do_power_usb(action, json_communication_method)
+      ran_power = True
+    except RuntimeError as e:
+      print(e)
+  elif json_communication_method['type'] == 'host':
+      do_power_command(action, json_communication_method)
+      ran_power = True
+  elif json_communication_method['type'] == 'group':
+      do_power_group(json_communication_method, action, json_conf)
+      ran_power = True
+  else:
+      raise RuntimeError("type {} is not supported".format(json_communication_method['type']))
+
+  return ran_power
+
+def parse_power_optional(json_communication_method, action, optional_power):
+  optional_json_data = {}
+  ran_power = False
+  if not optional_power:
+    print("skipped" + json_communication_method['id'])
+  elif os.path.exists(optional_power):
+    with open(optional_power) as f:
+      optional_json_data = json.load(f)
+  else:
+    optional_json_data = json.loads(optional_power)
+
+  for option in optional_json_data.keys():
+    if option == json_communication_method['id']:
+      print('found')
+      ran_power = parse_power(optional_json_data[option], action)
+
+  return ran_power
+
+def do_power(appliance, action, json_conf, optional_power = None):
   appliance_section = 'power'
 
   check_applicance(appliance, json_conf)
@@ -177,27 +221,10 @@ def do_power(appliance, action, json_conf):
   ran_power = False
 
   for json_communication_method in json_appliance_section:
-    check_device_type(json_communication_method)
-    if json_communication_method['type'] == 'serial':
-      try:
-        do_power_serial(action, json_communication_method)
-        ran_power = True
-      except RuntimeError as e:
-        print(e)
-    elif json_communication_method['type'] == 'usb':
-      try:
-        do_power_usb(action, json_communication_method)
-        ran_power = True
-      except RuntimeError as e:
-        print(e)
-    elif json_communication_method['type'] == 'host':
-        do_power_command(action, json_communication_method)
-        ran_power = True
-    elif json_communication_method['type'] == 'group':
-        do_power_group(json_communication_method, action, json_conf)
-        ran_power = True
+    if json_communication_method['type'] == 'optional':
+      parse_power_optional(json_communication_method, action, optional_power)
     else:
-      raise RuntimeError("type {} is not supported".format(json_communication_method['type']))
+      ran_power = parse_power(json_communication_method, action)
 
   if not ran_power:
     raise RuntimeError("Did not successfully turn power on for appliance {}".format(appliance))
@@ -254,12 +281,13 @@ def main():
 
   arg_mutex.add_argument("-p", "--power", choices = ['on', 'off'])
   parser.add_argument("-d", "--appliance", choices = json_conf.keys(), required=True)
+  parser.add_argument("--optional-power", help = "a json file with options or serialized json")
   arg_mutex.add_argument('--get-serial-device', choices = ['communications', 'power'])
   arg_mutex.add_argument('--json-expect-on-serial')
 
   args = parser.parse_args()
   if args.power:
-    do_power(args.appliance, args.power, json_conf)
+    do_power(args.appliance, args.power, json_conf, args.optional_power)
   elif args.get_serial_device:
     result_json = get_serial_device(args.appliance, args.get_serial_device, json_conf)
     print(json.dumps(result_json, sort_keys=True, indent=2))

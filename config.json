@@ -55,6 +55,9 @@
   "odroid-xu4" : {
     "power" : [
       {
+        "type" : "optional"
+      },
+      {
         "type" : "serial",
         "baud" : "115200",
         "device" : "/dev/ttyRelayBoard",
@@ -88,6 +91,10 @@
             }
           ]
         }
+      },
+      {
+        "type" : "optional",
+        "id" : "odroid-after-power"
       }
     ],
     "communications" : [
@@ -106,33 +113,17 @@
   "arietta" : {
     "power" : [
       {
-        "type" : "host",
-        "shell" : "True",
-        "command" : {
-          "on" : [
-            {
-              "execute" : "echo 1",
-              "io" : [ {
-                  "expect" : { "text" : "1" }
-                }
-              ]
-            }
-          ],
-          "off" : [
-            {
-              "execute" : "echo 2",
-              "io" : [ {
-                  "expect" : { "text" : "2" }
-                }
-              ]
-            }
-          ]
-        }
+        "type" : "optional",
+        "id" : "arietta-before-power"
       },
       {
         "type" : "usb",
         "usb-address" : "1-2.3",
         "usb-port" : "4"
+      },
+      {
+        "type" : "optional",
+        "id" : "arietta-after-power"
       }
     ],
     "communications" : [
