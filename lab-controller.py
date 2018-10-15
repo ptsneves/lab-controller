@@ -18,6 +18,7 @@ def check_serial_settings(json_appliance_section):
 
 def check_applicance(appliance, json_conf):
   if appliance not in json_conf.keys():
+    print(' '.join(json_conf.keys()))
     raise RuntimeError("appliance {} not found in configuration.".format(appliance))
 
 def check_appliance_section(appliance_section, json_appliance):
@@ -28,12 +29,11 @@ def check_device_type(json_appliance_section):
   if 'type' not in json_appliance_section.keys():
     raise RuntimeError("type not defined in appliance section")
 
-def do_power_group(group_json, action, global_json_conf):
+def get_power_group(group_json):
   if "devices" not in group_json.keys():
     raise RuntimeError("Found a group with no devices. Please correct the type or add devices")
 
-  for device in group_json["devices"]:
-    do_power(device, action, global_json_conf)
+  return group_json["devices"]
 
 def check_expect_instance(json_expect_instance):
   if not intersect(["text", "timeout"], json_expect_instance.keys()):
@@ -108,7 +108,8 @@ def do_host_command(action_json):
   if "execute" not in action_json.keys():
     raise RuntimeError("'execute' directive required for command")
 
-  exec_conn = do_execute(action_json["execute"], True)
+  execute = action_json["execute"]
+  exec_conn = do_execute(execute, True)
   if "io" in action_json.keys():
     for io in action_json["io"]:
       if "send" in io.keys():
@@ -127,9 +128,12 @@ def do_host_command(action_json):
           timeout = expect["timeout"]
 
         do_expect(exec_conn, text, match_type, timeout)
+    if not exec_conn.isalive() and exec_conn.wait() != 0:
+      raise RuntimeError("Host Command did not execute successfully: {}".format(execute))
+  else:
+    if exec_conn.wait() != 0:
+      raise RuntimeError("Host Command did not execute successfully: {}".format(execute))
 
-  if not exec_conn.isalive() and exec_conn.wait() != 0:
-    raise RuntimeError("Host Command did not execute successfully: {}".format(execute))
 
 def do_power_serial(action, json_power):
   check_serial_settings(json_power)
@@ -186,9 +190,6 @@ def parse_power(json_communication_method, action):
   elif json_communication_method['type'] == 'host':
       do_power_command(action, json_communication_method)
       ran_power = True
-  elif json_communication_method['type'] == 'group':
-      do_power_group(json_communication_method, action, json_conf)
-      ran_power = True
   else:
       raise RuntimeError("type {} is not supported".format(json_communication_method['type']))
 
@@ -198,7 +199,7 @@ def parse_power_optional(json_communication_method, action, optional_power):
   optional_json_data = {}
   ran_power = False
   if not optional_power:
-    print("skipped" + json_communication_method['id'])
+    print("skipped option {} because no data passed about it".format(json_communication_method['id']))
   elif os.path.exists(optional_power):
     with open(optional_power) as f:
       optional_json_data = json.load(f)
@@ -207,7 +208,7 @@ def parse_power_optional(json_communication_method, action, optional_power):
 
   for option in optional_json_data.keys():
     if option == json_communication_method['id']:
-      print('found')
+      print('found option for id: {}'.format(option))
       ran_power = parse_power(optional_json_data[option], action)
 
   return ran_power
@@ -224,8 +225,14 @@ def do_power(appliance, action, json_conf, optional_power = None):
   for json_communication_method in json_appliance_section:
     if json_communication_method['type'] == 'optional':
       parse_power_optional(json_communication_method, action, optional_power)
+    elif json_communication_method['type'] == 'group':
+      devices = get_power_group(json_communication_method)
+      for device in devices:
+        do_power(device, action, json_conf, optional_power)
+      ran_power = True
     else:
-      ran_power = parse_power(json_communication_method, action)
+      parse_power(json_communication_method, action)
+      ran_power = True
 
   if not ran_power:
     raise RuntimeError("Did not successfully turn power on for appliance {}".format(appliance))
