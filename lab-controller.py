@@ -109,23 +109,24 @@ def do_host_command(action_json):
     raise RuntimeError("'execute' directive required for command")
 
   exec_conn = do_execute(action_json["execute"], True)
-  for io in action_json["io"]:
-    if "send" in io.keys():
-      do_send(exec_conn, io["send"])
+  if "io" in action_json.keys():
+    for io in action_json["io"]:
+      if "send" in io.keys():
+        do_send(exec_conn, io["send"])
 
-    if "expect" in io.keys():
-      expect = io["expect"]
-      text = expect["text"]
+      if "expect" in io.keys():
+        expect = io["expect"]
+        text = expect["text"]
 
-      match_type = None
-      if "match-type" in expect:
-        match_type = expect["match-type"]
+        match_type = None
+        if "match-type" in expect:
+          match_type = expect["match-type"]
 
-      timeout = 2
-      if "timeout" in expect:
-        timeout = expect["timeout"]
+        timeout = 2
+        if "timeout" in expect:
+          timeout = expect["timeout"]
 
-      do_expect(exec_conn, text, match_type, timeout)
+        do_expect(exec_conn, text, match_type, timeout)
 
   if not exec_conn.isalive() and exec_conn.wait() != 0:
     raise RuntimeError("Host Command did not execute successfully: {}".format(execute))
