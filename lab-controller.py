@@ -169,8 +169,9 @@ def do_power_usb(action, json_power):
 def do_power_command(action, json_power):
   check_command(json_power)
 
-  for json_action_command in json_power["command"][action]:
-    do_host_command(json_action_command)
+  if action in json_power["command"]:
+    for json_action_command in json_power["command"][action]:
+      do_host_command(json_action_command)
 
 def parse_power(json_communication_method, action):
   ran_power = False
