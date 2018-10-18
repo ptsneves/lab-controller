@@ -73,9 +73,6 @@ def check_command(json_communication):
   if not intersect(["command"], json_communication.keys()):
     raise RuntimeError("'command' dictionary not found in power configuration")
 
-  if not intersect(['on', 'off'], json_communication['command'].keys()):
-    raise RuntimeError("'on' or 'off' configurations were not found. Please add them")
-
   for action in json_communication['command'].keys():
     for json_action_command in json_communication['command'][action]:
       if is_invalid_command(json_action_command):
@@ -144,14 +141,15 @@ def do_power_serial(action, json_power):
 
   power_cmd = get_serial_cmd(json_power['device'], json_power['baud'])
 
-  for json_action_command in json_power['command'][action]:
-    if "io" not in json_action_command.keys():
-      raise RuntimeError("io section required for serial devices")
+  if action in json_power["command"]:
+    for json_action_command in json_power['command'][action]:
+      if "io" not in json_action_command.keys():
+        raise RuntimeError("io section required for serial devices")
 
-    check_io(json_action_command)
+      check_io(json_action_command)
 
-  json_action_command["execute"] = power_cmd
-  do_host_command(json_action_command)
+    json_action_command["execute"] = power_cmd
+    do_host_command(json_action_command)
 
 def do_power_usb(action, json_power):
   check_usb_json(json_power)
@@ -172,8 +170,9 @@ def do_power_usb(action, json_power):
 def do_power_command(action, json_power):
   check_command(json_power)
 
-  for json_action_command in json_power["command"][action]:
-    do_host_command(json_action_command)
+  if action in json_power["command"]:
+    for json_action_command in json_power["command"][action]:
+      do_host_command(json_action_command)
 
 def parse_power(json_communication_method, action):
   ran_power = False
