@@ -212,7 +212,8 @@ def parse_power_optional(json_communication_method, action, optional_power):
   for option in optional_json_data.keys():
     if option == json_communication_method['id']:
       print('found option for id: {}'.format(option))
-      ran_power = parse_power(optional_json_data[option], action)
+      for option_power_method in optional_json_data[option]:
+        ran_power = parse_power(option_power_method, action)
 
   return ran_power
 
