@@ -73,9 +73,6 @@ def check_command(json_communication):
   if not intersect(["command"], json_communication.keys()):
     raise RuntimeError("'command' dictionary not found in power configuration")
 
-  if not intersect(['on', 'off'], json_communication['command'].keys()):
-    raise RuntimeError("'on' or 'off' configurations were not found. Please add them")
-
   for action in json_communication['command'].keys():
     for json_action_command in json_communication['command'][action]:
       if is_invalid_command(json_action_command):
