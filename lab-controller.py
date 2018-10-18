@@ -5,6 +5,7 @@ import sys
 import argparse
 import json
 import pexpect
+import time
 
 def intersect(l1, l2):
   expected_len = min(len(l1), len(l2))
@@ -88,7 +89,9 @@ def do_execute(execute, shell = False):
   if shell:
     execute = "bash -c '{}'".format(execute)
 
-  return pexpect.spawnu(execute, env = os.environ, codec_errors = 'ignore')
+  timestr = time.strftime("%Y%m%d-%H%M%S")
+  logfile = "/tmp/{}{}".format(execute[:6].replace(" ", "_"),timestr)
+  return pexpect.spawnu(execute, env = os.environ, codec_errors = 'ignore', logfile = logfile)
 
 def do_expect(conn, expect = None, match_type = None, timeout = 2):
   if expect:
@@ -275,7 +278,11 @@ def expect_on_serial(appliance, json_expect, json_conf):
   check_json_expect(json_expect)
 
   serial_cmd = "socat -t0 STDIO,raw,echo=0,escape=0x03,nonblock=1 file:{},b{},cs8,parenb=0,cstopb=0,clocal=0,raw,echo=0".format(json_serial['device'], json_serial['baud'])
-  serial_conn = pexpect.spawnu(serial_cmd, timeout=2, env=os.environ, codec_errors='ignore', logfile=sys.stdout)
+
+  timestr = time.strftime("%Y%m%d-%H%M%S")
+  logfile = "/tmp/{}{}".format(execute[:6].replace(" ", "_"),timestr)
+
+  serial_conn = pexpect.spawnu(serial_cmd, timeout=2, env=os.environ, codec_errors='ignore', logfile=logfile)
 
   if "reset-prompt" in json_serial.keys():
     serial_conn.send(json_serial["reset-prompt"])
