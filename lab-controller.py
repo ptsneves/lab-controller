@@ -92,12 +92,16 @@ def do_execute(execute, shell = False):
 
 def do_expect(conn, expect = None, match_type = None, timeout = 2):
   if expect:
-    if match_type == "re":
-      conn.expect(expect, timeout = int(timeout))
-    else:
-      conn.expect_exact(expect, float(timeout))
+    try:
+      if match_type == "re":
+        conn.expect(expect, timeout = int(timeout))
+      else:
+        conn.expect_exact(expect, float(timeout))
 
-    print("Expect success: {}".format(expect))
+      print("Expect success: {}".format(expect))
+    except pexpect.TIMEOUT:
+      print("Expect fail: {}".format(expect))
+      raise
 
 def do_send(conn, text = None):
   if text:
