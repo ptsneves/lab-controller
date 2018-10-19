@@ -296,7 +296,7 @@ def expect_on_serial(appliance, json_expect, json_conf):
 
     json_expect_array = json_expect["expect"]
     for expect_entry in json_expect_array:
-      serial_conn.expect(expect_entry['text'], expect_entry['timeout'])
+      serial_conn.expect(expect_entry['text'], float(expect_entry['timeout']))
 
 def main():
   json_config_path = "./config.json"
