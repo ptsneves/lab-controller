@@ -118,6 +118,7 @@ def do_host_command(action_json):
   log_file_name = "/tmp/lab-controller-{}{}".format(execute[:6].replace(" ", "_"),timestr)
   with open(log_file_name, 'w') as logfile:
     print(execute)
+    killed_on_purpose = False
     exec_conn = do_execute(execute, logfile, True)
     if "io" in action_json.keys():
       for io in action_json["io"]:
@@ -142,8 +143,9 @@ def do_host_command(action_json):
         #we are done here and we want to leave.
         if not exec_conn.terminate(True):
           raise RuntimeError("Application blocked and could not be terminated. Error")
+        killed_on_purpose = True
 
-    if not exec_conn.wait() != 0:
+    if not killed_on_purpose and exec_conn.wait() != 0:
         raise RuntimeError("Host Command did not execute successfully: {}".format(execute))
 
 
