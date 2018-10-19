@@ -85,12 +85,10 @@ def get_serial_cmd(device, baud):
   return "socat -t0 STDIO,raw,echo=0,escape=0x03,nonblock=1 " \
       "file:{},b{},cs8,parenb=0,cstopb=0,clocal=0,raw,echo=0".format(device, baud)
 
-def do_execute(execute, shell = False):
+def do_execute(execute, logfile, shell = False):
   if shell:
     execute = "bash -c '{}'".format(execute)
 
-  timestr = time.strftime("%Y%m%d-%H%M%S")
-  logfile = "/tmp/{}{}".format(execute[:6].replace(" ", "_"),timestr)
   return pexpect.spawnu(execute, env = os.environ, codec_errors = 'ignore', logfile = logfile)
 
 def do_expect(conn, expect = None, match_type = None, timeout = 2):
@@ -115,33 +113,38 @@ def do_host_command(action_json):
     raise RuntimeError("'execute' directive required for command")
 
   execute = action_json["execute"]
-  exec_conn = do_execute(execute, True)
-  if "io" in action_json.keys():
-    for io in action_json["io"]:
-      if "send" in io.keys():
-        do_send(exec_conn, io["send"])
 
-      if "expect" in io.keys():
-        expect = io["expect"]
-        text = expect["text"]
+  timestr = time.strftime("%Y%m%d-%H%M%S")
+  log_file_name = "/tmp/lab-controller-{}{}".format(execute[:6].replace(" ", "_"),timestr)
+  with open(log_file_name, 'w') as logfile:
+    print(execute)
+    exec_conn = do_execute(execute, logfile, True)
+    if "io" in action_json.keys():
+      for io in action_json["io"]:
+        if "send" in io.keys():
+          do_send(exec_conn, io["send"])
 
-        match_type = None
-        if "match-type" in expect:
-          match_type = expect["match-type"]
+        if "expect" in io.keys():
+          expect = io["expect"]
+          text = expect["text"]
 
-        timeout = 2
-        if "timeout" in expect:
-          timeout = expect["timeout"]
+          match_type = None
+          if "match-type" in expect:
+            match_type = expect["match-type"]
 
-        do_expect(exec_conn, text, match_type, timeout)
+          timeout = 2
+          if "timeout" in expect:
+            timeout = expect["timeout"]
 
-    if exec_conn.isalive():
-      #we are done here and we want to leave.
-      if not exec_conn.terminate(True):
-        raise RuntimeError("Application blocked and could not be terminated. Error")
+          do_expect(exec_conn, text, match_type, timeout)
 
-  if exec_conn.wait() != 0:
-      raise RuntimeError("Host Command did not execute successfully: {}".format(execute))
+      if exec_conn.isalive():
+        #we are done here and we want to leave.
+        if not exec_conn.terminate(True):
+          raise RuntimeError("Application blocked and could not be terminated. Error")
+
+    if not exec_conn.wait() != 0:
+        raise RuntimeError("Host Command did not execute successfully: {}".format(execute))
 
 
 def do_power_serial(action, json_power):
@@ -280,18 +283,18 @@ def expect_on_serial(appliance, json_expect, json_conf):
   serial_cmd = "socat -t0 STDIO,raw,echo=0,escape=0x03,nonblock=1 file:{},b{},cs8,parenb=0,cstopb=0,clocal=0,raw,echo=0".format(json_serial['device'], json_serial['baud'])
 
   timestr = time.strftime("%Y%m%d-%H%M%S")
-  logfile = "/tmp/{}{}".format(execute[:6].replace(" ", "_"),timestr)
+  log_file_name = "/tmp/lab-controller-{}{}".format(execute[:6].replace(" ", "_"),timestr)
+  with open(log_file_name, 'wb') as logfile:
+    serial_conn = pexpect.spawnu(serial_cmd, timeout=2, env=os.environ, codec_errors='ignore', logfile=logfile)
 
-  serial_conn = pexpect.spawnu(serial_cmd, timeout=2, env=os.environ, codec_errors='ignore', logfile=logfile)
+    if "reset-prompt" in json_serial.keys():
+      serial_conn.send(json_serial["reset-prompt"])
+      if "reset-expect" in json_serial.keys():
+        serial_conn.expect(json_serial["reset-expect"])
 
-  if "reset-prompt" in json_serial.keys():
-    serial_conn.send(json_serial["reset-prompt"])
-    if "reset-expect" in json_serial.keys():
-      serial_conn.expect(json_serial["reset-expect"])
-
-  json_expect_array = json_expect["expect"]
-  for expect_entry in json_expect_array:
-    serial_conn.expect(expect_entry['text'], float(expect_entry['timeout']))
+    json_expect_array = json_expect["expect"]
+    for expect_entry in json_expect_array:
+      serial_conn.expect(expect_entry['text'], expect_entry['timeout'])
 
 def main():
   json_config_path = "./config.json"
