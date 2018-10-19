@@ -92,10 +92,12 @@ def do_execute(execute, shell = False):
 
 def do_expect(conn, expect = None, match_type = None, timeout = 2):
   if expect:
-    if match_type == "exact":
-      conn.expect_exact(expect, timeout)
-    else:
+    if match_type == "re":
       conn.expect(expect, timeout = int(timeout))
+    else:
+      conn.expect_exact(expect, float(timeout))
+
+    print("Expect success: {}".format(expect))
 
 def do_send(conn, text = None):
   if text:
@@ -163,7 +165,8 @@ def do_power_usb(action, json_power):
   if action == "off":
     io_list.append({ "expect" : { "text" : '  Port {}: 0000 {}'.format(json_power['usb-port'], action)}})
   if action == "on":
-    io_list.append({ "expect" : { "text" : '  Port {}: [0-9]{{4}} power'.format(json_power['usb-port'])}})
+    io_list.append({ "expect" : { "text" : '  Port {}: [0-9]{{4}} power'.format(json_power['usb-port']),
+      "match-type" : "re"}})
   json_action_command = {"execute" : execute, "io" : io_list}
   do_host_command(json_action_command)
 
