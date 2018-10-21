@@ -13,23 +13,23 @@
     ]
   },
   "ardupilot-simulator" : {
-  "power" : [
-    {
-      "type" : "host",
-      "command" : {
-        "on" : [
-          {
-            "execute" : "docker run -d --name ardupilot-simulator --rm --net=host airborne/ardupilot:latest"
-          }
-        ],
-        "off" : [
-          {
-            "execute" : "docker stop -t0 ardupilot-simulator"
-          }
-        ]
+    "power" : [
+      {
+        "type" : "host",
+        "command" : {
+          "on" : [
+            {
+              "execute" : "docker run -d --name ardupilot-simulator --rm --net=host airborne/ardupilot:latest"
+            }
+          ],
+          "off" : [
+            {
+              "execute" : "docker stop -t0 ardupilot-simulator || exit 0"
+            }
+          ]
+        }
       }
-    }
-  ]
+    ]
   },
   "camera" : {
     "power" : [
