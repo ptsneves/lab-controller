@@ -84,7 +84,7 @@
         "command" : {
           "on" : [
             {
-              "io" : [ 
+              "io" : [
                 {
                   "send" : "\r",
                   "expect" : { "text" : "Welcome. Commands available are", "timeout" : "1"}
