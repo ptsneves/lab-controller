@@ -101,8 +101,11 @@ def do_expect(conn, expect = None, match_type = None, timeout = 2):
 
       print("Expect success: {}".format(expect))
     except pexpect.TIMEOUT:
-      print("Expect fail: {}".format(expect))
-      raise
+      raise RuntimeError("""Expect fail: {}
+*************BUFFER DUMP START************
+{}
+*************BUFFER DUMP END**************
+""".format(expect, conn.buffer))
 
 def do_send(conn, text = None):
   if text:
