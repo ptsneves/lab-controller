@@ -193,31 +193,18 @@ def do_power_command(action, json_power):
       do_host_command(json_action_command)
 
 def parse_power(json_communication_method, action):
-  ran_power = False
   check_device_type(json_communication_method)
   if json_communication_method['type'] == 'serial':
-    try:
-      do_power_serial(action, json_communication_method)
-      ran_power = True
-    except RuntimeError as e:
-      print(e)
+    do_power_serial(action, json_communication_method)
   elif json_communication_method['type'] == 'usb':
-    try:
-      do_power_usb(action, json_communication_method)
-      ran_power = True
-    except RuntimeError as e:
-      print(e)
+    do_power_usb(action, json_communication_method)
   elif json_communication_method['type'] == 'host':
-      do_power_command(action, json_communication_method)
-      ran_power = True
+    do_power_command(action, json_communication_method)
   else:
-      raise RuntimeError("type {} is not supported".format(json_communication_method['type']))
-
-  return ran_power
+    raise RuntimeError("type {} is not supported".format(json_communication_method['type']))
 
 def parse_power_optional(json_communication_method, action, optional_power):
   optional_json_data = {}
-  ran_power = False
   if not optional_power:
     print("skipped option {} because no data passed about it".format(json_communication_method['id']))
   elif os.path.exists(optional_power):
@@ -230,9 +217,7 @@ def parse_power_optional(json_communication_method, action, optional_power):
     if option == json_communication_method['id']:
       print('found option for id: {}'.format(option))
       for option_power_method in optional_json_data[option]:
-        ran_power = parse_power(option_power_method, action)
-
-  return ran_power
+        parse_power(option_power_method, action)
 
 def do_power(appliance, action, json_conf, optional_power = None):
   appliance_section = 'power'
@@ -241,7 +226,6 @@ def do_power(appliance, action, json_conf, optional_power = None):
   json_appliance = json_conf[appliance]
   check_appliance_section(appliance_section, json_appliance)
   json_appliance_section = json_appliance[appliance_section]
-  ran_power = False
 
   for json_communication_method in json_appliance_section:
     if json_communication_method['type'] == 'optional':
@@ -250,13 +234,8 @@ def do_power(appliance, action, json_conf, optional_power = None):
       devices = get_power_group(json_communication_method)
       for device in devices:
         do_power(device, action, json_conf, optional_power)
-      ran_power = True
     else:
       parse_power(json_communication_method, action)
-      ran_power = True
-
-  if not ran_power:
-    raise RuntimeError("Did not successfully turn power on for appliance {}".format(appliance))
 
 def get_serial_device(appliance, appliance_section, json_conf):
   found_serial = False
