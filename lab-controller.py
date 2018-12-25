@@ -118,7 +118,8 @@ def do_host_command(action_json):
   execute = action_json["execute"]
 
   timestr = time.strftime("%Y%m%d-%H%M%S")
-  log_file_name = "/tmp/lab-controller-{}{}".format(execute[:6].replace(" ", "_"),timestr)
+  log_file_name = "/tmp/lab-controller-{}-{}".format(os.path.basename(execute.split()[0]).replace(" ", "_"),
+          timestr)
   with open(log_file_name, 'w') as logfile:
     print(execute)
     killed_on_purpose = False
