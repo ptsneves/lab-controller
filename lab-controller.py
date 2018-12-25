@@ -7,6 +7,21 @@ import json
 import pexpect
 import time
 
+class Tee(object):
+  def __init__(self, name, mode):
+    self.name = name
+    self.file = open(name, mode)
+    self.stdout = sys.stdout
+    print("Log file in {}".format(name))
+  def __del__(self):
+    self.file.close()
+    print("Closed Log file in {}".format(self.name))
+  def write(self, data):
+    self.file.write(data)
+    self.stdout.write(data)
+  def flush(self):
+    self.file.flush()
+
 def intersect(l1, l2):
   expected_len = min(len(l1), len(l2))
   intersection_len = len(set(l1) & set(l2))
