@@ -100,11 +100,11 @@ def get_serial_cmd(device, baud):
   return "socat -t0 STDIO,raw,echo=0,escape=0x03,nonblock=1 " \
       "file:{},b{},cs8,parenb=0,cstopb=0,clocal=0,raw,echo=0".format(device, baud)
 
-def do_execute(execute, logfile, shell = False):
+def do_execute(execute, logger, shell = False):
   if shell:
     execute = "bash -c '{}'".format(execute)
 
-  return pexpect.spawnu(execute, env = os.environ, codec_errors = 'ignore', logfile = logfile)
+  return pexpect.spawnu(execute, env = os.environ, codec_errors = 'ignore', logfile = logger)
 
 def do_expect(conn, expect = None, match_type = None, timeout = 2):
   if expect:
@@ -135,34 +135,33 @@ def do_host_command(action_json):
   timestr = time.strftime("%Y%m%d-%H%M%S")
   log_file_name = "/tmp/lab-controller-{}-{}".format(os.path.basename(execute.split()[0]).replace(" ", "_"),
           timestr)
-  with open(log_file_name, 'w') as logfile:
-    print(execute)
-    killed_on_purpose = False
-    exec_conn = do_execute(execute, logfile, True)
-    if "io" in action_json.keys():
-      for io in action_json["io"]:
-        if "send" in io.keys():
-          do_send(exec_conn, io["send"])
+  killed_on_purpose = False
+  logfile = Tee(log_file_name, "w")
+  exec_conn = do_execute(execute, logfile, True)
+  if "io" in action_json.keys():
+    for io in action_json["io"]:
+      if "send" in io.keys():
+        do_send(exec_conn, io["send"])
 
-        if "expect" in io.keys():
-          expect = io["expect"]
-          text = expect["text"]
+      if "expect" in io.keys():
+        expect = io["expect"]
+        text = expect["text"]
 
-          match_type = None
-          if "match-type" in expect:
-            match_type = expect["match-type"]
+        match_type = None
+        if "match-type" in expect:
+          match_type = expect["match-type"]
 
-          timeout = 2
-          if "timeout" in expect:
-            timeout = expect["timeout"]
+        timeout = 2
+        if "timeout" in expect:
+          timeout = expect["timeout"]
 
-          do_expect(exec_conn, text, match_type, timeout)
+        do_expect(exec_conn, text, match_type, timeout)
 
-      if exec_conn.isalive():
-        #we are done here and we want to leave.
-        if not exec_conn.terminate(True):
-          raise RuntimeError("Application blocked and could not be terminated. Error")
-        killed_on_purpose = True
+    if exec_conn.isalive():
+      #we are done here and we want to leave.
+      if not exec_conn.terminate(True):
+        raise RuntimeError("Application blocked and could not be terminated. Error")
+      killed_on_purpose = True
 
     if not killed_on_purpose and exec_conn.wait() != 0:
         raise RuntimeError("Host Command did not execute successfully: {}".format(execute))
