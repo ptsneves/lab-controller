@@ -169,5 +169,13 @@
     ],
     "communications" : [
     ]
+  },
+  "virt-arm" : {
+    "power" : [
+      {
+        "type" : "optional",
+        "id" : "virt-arm-before-power"
+      }
+    ]
   }
 }
