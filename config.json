@@ -175,6 +175,10 @@
       {
         "type" : "optional",
         "id" : "virt-arm-before-power"
+      },
+      {
+        "type" : "optional",
+        "id" : "virt-arm-after-power"
       }
     ]
   }
