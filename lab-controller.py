@@ -126,7 +126,7 @@ def do_send(conn, text = None):
   if text:
     conn.send(text)
 
-def do_host_command(action_json):
+def do_host_command(action_json, kill_after_expect = False):
   if "execute" not in action_json.keys():
     raise RuntimeError("'execute' directive required for command")
 
@@ -157,15 +157,13 @@ def do_host_command(action_json):
 
         do_expect(exec_conn, text, match_type, timeout)
 
-    if exec_conn.isalive():
-      #we are done here and we want to leave.
-      if not exec_conn.terminate(True):
-        raise RuntimeError("Application blocked and could not be terminated. Error")
-      killed_on_purpose = True
+  if kill_after_expect and exec_conn.isalive():
+    #we are done here and we want to leave.
+    if not exec_conn.terminate(True):
+      raise RuntimeError("Application blocked and could not be terminated. Error")
 
-    if not killed_on_purpose and exec_conn.wait() != 0:
-        raise RuntimeError("Host Command did not execute successfully: {}".format(execute))
-
+  if not kill_after_expect and exec_conn.wait() != 0:
+    raise RuntimeError("Host Command did not execute successfully: {}".format(execute))
 
 def do_power_serial(action, json_power):
   check_serial_settings(json_power)
@@ -181,7 +179,7 @@ def do_power_serial(action, json_power):
       check_io(json_action_command)
 
     json_action_command["execute"] = power_cmd
-    do_host_command(json_action_command)
+    do_host_command(json_action_command, True)
 
 def do_power_usb(action, json_power):
   check_usb_json(json_power)
