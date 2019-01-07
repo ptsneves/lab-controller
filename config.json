@@ -23,6 +23,18 @@
       }
     ]
   },
+  "drotagcloud-test-virt" : {
+    "power" : [
+      {
+        "type" : "group",
+        "devices" : [
+          "ardupilot-simulator",
+          "socketio-simulator",
+          "virt-arm"
+        ]
+      }
+    ]
+  },
   "socketio-simulator" : {
     "power" : [
       {
