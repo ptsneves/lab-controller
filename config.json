@@ -12,6 +12,17 @@
       }
     ]
   },
+  "drotagx-test-virt" : {
+    "power" : [
+      {
+        "type" : "group",
+        "devices" : [
+          "virt-arm",
+          "ardupilot-simulator"
+        ]
+      }
+    ]
+  },
   "socketio-simulator" : {
     "power" : [
       {
