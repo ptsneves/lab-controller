@@ -12,6 +12,26 @@
       }
     ]
   },
+  "socketio-simulator" : {
+    "power" : [
+      {
+        "type" : "host",
+        "command" : {
+          "on" : [
+            {
+              "execute" : "docker run -d --net=host --env NAMESPACE_NAME=drotag --env EVENT_NAME=server_test --rm --name socketio airborne/socketio:latest server-drohub-test.js"
+            }
+          ],
+          "off" : [
+            {
+              "execute" : "docker stop -t0 socketio || exit 0"
+            }
+          ]
+        }
+      }
+    ]
+  },
+
   "ardupilot-simulator" : {
     "power" : [
       {
