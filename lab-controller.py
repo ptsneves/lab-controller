@@ -135,7 +135,6 @@ def do_host_command(action_json, kill_after_expect = False):
   timestr = time.strftime("%Y%m%d-%H%M%S")
   log_file_name = "/tmp/lab-controller-{}-{}".format(os.path.basename(execute.split()[0]).replace(" ", "_"),
           timestr)
-  killed_on_purpose = False
   logfile = Tee(log_file_name, "w")
   exec_conn = do_execute(execute, logfile, True)
   if "io" in action_json.keys():
@@ -163,7 +162,9 @@ def do_host_command(action_json, kill_after_expect = False):
       raise RuntimeError("Application blocked and could not be terminated. Error")
 
   if not kill_after_expect and exec_conn.wait() != 0:
-    raise RuntimeError("Host Command did not execute successfully: {}".format(execute))
+    exec_conn.close()
+    raise RuntimeError("Host Command did not execute successfully: {}. Exit status {}; Signal status: {}".format(
+      execute, exec_conn.exitstatus, exec_conn.signalstatus))
 
 def do_power_serial(action, json_power):
   check_serial_settings(json_power)
