@@ -1,0 +1,21 @@
+{
+  "stderr-test" : {
+    "power" : [
+      {
+        "type" : "host",
+        "command" : {
+          "on" : [
+            {
+              "execute" : "(>&2 echo stderr power-on)"
+            }
+          ],
+          "off" : [
+            {
+              "execute" : "(>&2 echo stderr power-off)"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
