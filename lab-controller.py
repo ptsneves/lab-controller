@@ -133,9 +133,11 @@ def do_host_command(action_json, kill_after_expect = False):
   execute = action_json["execute"]
 
   timestr = time.strftime("%Y%m%d-%H%M%S")
-  log_file_name = "/tmp/lab-controller-{}-{}".format(os.path.basename(execute.split()[0]).replace(" ", "_"),
-          timestr)
+  file_suffix = os.path.basename(execute.split()[0]).replace(" ", "_")
+  log_file_basename = "lab-controller-{}-{}".format(file_suffix, timestr)
+  log_file_name = os.path.join(log_directory, log_file_basename)
   logfile = Tee(log_file_name, "w")
+
   exec_conn = do_execute(execute, logfile, True)
   if "io" in action_json.keys():
     for io in action_json["io"]:
