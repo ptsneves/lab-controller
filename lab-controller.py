@@ -156,6 +156,8 @@ def do_host_command(action_json, kill_after_expect = False):
 
         do_expect(exec_conn, text, match_type, timeout)
 
+  do_expect(exec_conn, pexpect.EOF)
+
   if kill_after_expect and exec_conn.isalive():
     #we are done here and we want to leave.
     if not exec_conn.terminate(True):
