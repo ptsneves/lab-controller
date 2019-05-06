@@ -296,22 +296,28 @@ def expect_on_serial(appliance, json_expect, json_conf):
 
 def main():
   json_config_path = "./config.json"
+
+  parser = argparse.ArgumentParser(description='Controls the laboratory relay board and usb hubs.')
+  arg_mutex = parser.add_mutually_exclusive_group(required=True)
+
+  arg_mutex.add_argument("-p", "--power", choices = ['on', 'off'])
+  parser.add_argument("-c", "--config", help = "Option for the path of an external configuration .json file")
+  parser.add_argument("-d", "--appliance", required=True)
+  parser.add_argument("--optional-power", help = "a json file with options or serialized json")
+  arg_mutex.add_argument('--get-serial-device', choices = ['communications', 'power'])
+  arg_mutex.add_argument('--json-expect-on-serial')
+
+  args = parser.parse_args()
+
+  if args.config:
+    json_config_path = args.config
+
   if not os.path.exists(json_config_path):
     raise RuntimeError("Selected configuration file {} not found".format(json_config_path))
 
   with open(json_config_path) as json_file:
     json_conf = json.load(json_file)
 
-  parser = argparse.ArgumentParser(description='Controls the laboratory relay board and usb hubs.')
-  arg_mutex = parser.add_mutually_exclusive_group(required=True)
-
-  arg_mutex.add_argument("-p", "--power", choices = ['on', 'off'])
-  parser.add_argument("-d", "--appliance", choices = json_conf.keys(), required=True)
-  parser.add_argument("--optional-power", help = "a json file with options or serialized json")
-  arg_mutex.add_argument('--get-serial-device', choices = ['communications', 'power'])
-  arg_mutex.add_argument('--json-expect-on-serial')
-
-  args = parser.parse_args()
   if args.power:
     do_power(args.appliance, args.power, json_conf, args.optional_power)
   elif args.get_serial_device:
