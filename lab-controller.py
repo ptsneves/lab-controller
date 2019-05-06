@@ -126,7 +126,7 @@ def do_send(conn, text = None):
   if text:
     conn.send(text)
 
-def do_host_command(action_json, kill_after_expect = False):
+def do_host_command(action_json, log_directory, kill_after_expect = False):
   if "execute" not in action_json.keys():
     raise RuntimeError("'execute' directive required for command")
 
@@ -134,7 +134,7 @@ def do_host_command(action_json, kill_after_expect = False):
 
   timestr = time.strftime("%Y%m%d-%H%M%S")
   file_suffix = os.path.basename(execute.split()[0]).replace(" ", "_")
-  log_file_basename = "lab-controller-{}-{}".format(file_suffix, timestr)
+  log_file_basename = "lab-controller-{}-{}.log".format(file_suffix, timestr)
   log_file_name = os.path.join(log_directory, log_file_basename)
   logfile = Tee(log_file_name, "w")
 
@@ -170,7 +170,7 @@ def do_host_command(action_json, kill_after_expect = False):
     raise RuntimeError("Host Command did not execute successfully: {}. Exit status {}; Signal status: {}".format(
       execute, exec_conn.exitstatus, exec_conn.signalstatus))
 
-def do_power_serial(action, json_power):
+def do_power_serial(action, json_power, log_directory):
   check_serial_settings(json_power)
   check_command(json_power)
 
@@ -184,13 +184,12 @@ def do_power_serial(action, json_power):
       check_io(json_action_command)
 
     json_action_command["execute"] = power_cmd
-    do_host_command(json_action_command, True)
+    do_host_command(json_action_command, log_directory, True)
 
-def do_power_usb(action, json_power):
+def do_power_usb(action, json_power, log_directory):
   check_usb_json(json_power)
 
   execute = 'uhubctl -a {} -l {} -p {}'.format(action, json_power['usb-address'], json_power['usb-port'])
-
   io_list = []
   io_list.append({ "expect" : {"text" : 'Sent power {} request'.format(action)}})
   io_list.append({ "expect" : {"text" : 'New status for hub {}'.format(json_power['usb-address'])}})
@@ -201,27 +200,27 @@ def do_power_usb(action, json_power):
     io_list.append({ "expect" : { "text" : '  Port {}: [0-9]{{4}} power'.format(json_power['usb-port']),
       "match-type" : "re"}})
   json_action_command = {"execute" : execute, "io" : io_list}
-  do_host_command(json_action_command)
+  do_host_command(json_action_command, log_directory)
 
-def do_power_command(action, json_power):
+def do_power_command(action, json_power, log_directory):
   check_command(json_power)
 
   if action in json_power["command"]:
     for json_action_command in json_power["command"][action]:
-      do_host_command(json_action_command)
+      do_host_command(json_action_command, log_directory)
 
-def parse_power(json_communication_method, action):
+def parse_power(json_communication_method, action, log_directory):
   check_device_type(json_communication_method)
   if json_communication_method['type'] == 'serial':
-    do_power_serial(action, json_communication_method)
+    do_power_serial(action, json_communication_method, log_directory)
   elif json_communication_method['type'] == 'usb':
-    do_power_usb(action, json_communication_method)
+    do_power_usb(action, json_communication_method, log_directory)
   elif json_communication_method['type'] == 'host':
-    do_power_command(action, json_communication_method)
+    do_power_command(action, json_communication_method, log_directory)
   else:
     raise RuntimeError("type {} is not supported".format(json_communication_method['type']))
 
-def parse_power_optional(json_communication_method, action, optional_power):
+def parse_power_optional(json_communication_method, action, optional_power, log_directory):
   optional_json_data = {}
   if not optional_power:
     print("skipped option {} because no data passed about it".format(json_communication_method['id']))
@@ -235,9 +234,9 @@ def parse_power_optional(json_communication_method, action, optional_power):
     if option == json_communication_method['id']:
       print('found option for id: {}'.format(option))
       for option_power_method in optional_json_data[option]:
-        parse_power(option_power_method, action)
+        parse_power(option_power_method, action, log_directory)
 
-def do_power(appliance, action, json_conf, optional_power = None):
+def do_power(appliance, action, json_conf, log_directory, optional_power = None,):
   appliance_section = 'power'
 
   check_applicance(appliance, json_conf)
@@ -247,13 +246,13 @@ def do_power(appliance, action, json_conf, optional_power = None):
 
   for json_communication_method in json_appliance_section:
     if json_communication_method['type'] == 'optional':
-      parse_power_optional(json_communication_method, action, optional_power)
+      parse_power_optional(json_communication_method, action, optional_power, log_directory)
     elif json_communication_method['type'] == 'group':
       devices = get_power_group(json_communication_method)
       for device in devices:
-        do_power(device, action, json_conf, optional_power)
+        do_power(device, action, json_conf, log_directory, optional_power)
     else:
-      parse_power(json_communication_method, action)
+      parse_power(json_communication_method, action, log_directory)
 
 def get_serial_device(appliance, appliance_section, json_conf):
   found_serial = False
@@ -285,7 +284,7 @@ def expect_on_serial(appliance, json_expect, json_conf):
   serial_cmd = "socat -t0 STDIO,raw,echo=0,escape=0x03,nonblock=1 file:{},b{},cs8,parenb=0,cstopb=0,clocal=0,raw,echo=0".format(json_serial['device'], json_serial['baud'])
 
   timestr = time.strftime("%Y%m%d-%H%M%S")
-  log_file_name = "/tmp/lab-controller-{}{}".format(execute[:6].replace(" ", "_"),timestr)
+  log_file_name = "/tmp/lab-controller-serial-{}{}.log".format(json_serial["device"],timestr)
   with open(log_file_name, 'wb') as logfile:
     serial_conn = pexpect.spawnu(serial_cmd, timeout=2, env=os.environ, codec_errors='ignore', logfile=logfile)
 
@@ -308,6 +307,7 @@ def main():
   parser.add_argument("-c", "--config", help = "Option for the path of an external configuration .json file")
   parser.add_argument("-d", "--appliance", required=True)
   parser.add_argument("--optional-power", help = "a json file with options or serialized json")
+  parser.add_argument("-l", "--log-directory", default = "/tmp", help = "The directory where logs should be stored. Default is /tmp")
   arg_mutex.add_argument('--get-serial-device', choices = ['communications', 'power'])
   arg_mutex.add_argument('--json-expect-on-serial')
 
@@ -323,7 +323,7 @@ def main():
     json_conf = json.load(json_file)
 
   if args.power:
-    do_power(args.appliance, args.power, json_conf, args.optional_power)
+    do_power(args.appliance, args.power, json_conf, args.log_directory, args.optional_power)
   elif args.get_serial_device:
     result_json = get_serial_device(args.appliance, args.get_serial_device, json_conf)
     print(json.dumps(result_json, sort_keys=True, indent=2))
