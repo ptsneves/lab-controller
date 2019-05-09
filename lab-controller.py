@@ -158,7 +158,6 @@ def do_host_command(action_json, log_directory, kill_after_expect = False):
 
         do_expect(exec_conn, text, match_type, timeout)
 
-  do_expect(exec_conn, pexpect.EOF)
 
   if kill_after_expect and exec_conn.isalive():
     #we are done here and we want to leave.
@@ -166,6 +165,7 @@ def do_host_command(action_json, log_directory, kill_after_expect = False):
       raise RuntimeError("Application blocked and could not be terminated. Error")
 
   if not kill_after_expect and exec_conn.wait() != 0:
+    do_expect(exec_conn, pexpect.EOF)
     exec_conn.close()
     raise RuntimeError("Host Command did not execute successfully: {}. Exit status {}; Signal status: {}".format(
       execute, exec_conn.exitstatus, exec_conn.signalstatus))
