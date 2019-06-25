@@ -170,6 +170,9 @@ def do_host_command(action_json, log_directory, kill_after_expect = False):
     raise RuntimeError("Host Command did not execute successfully: {}. Exit status {}; Signal status: {}".format(
       execute, exec_conn.exitstatus, exec_conn.signalstatus))
 
+  do_expect(exec_conn, pexpect.EOF)
+  exec_conn.close()
+
 def do_power_serial(action, json_power, log_directory):
   check_serial_settings(json_power)
   check_command(json_power)
