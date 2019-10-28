@@ -37,7 +37,7 @@ def doesNMInterfaceExist(interface):
 
 def isNMInterfaceManaged(interface):
     if not doesNMInterfaceExist(interface):
-        raise Exception("Network Manager Interface does not exist")
+        raise Exception("Network Manager Interface {} does not exist".format(interface))
 
     result = runProcess("nmcli device show {}".format(interface))
     if not isZeroExitCode(result):
