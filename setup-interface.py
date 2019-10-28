@@ -6,6 +6,7 @@ import os
 import sys
 import stat
 import shutil
+import time
 import argparse
 
 
@@ -157,18 +158,24 @@ def configureInterfaceUp(args):
         if isNMInterfaceManaged(args.interface):
             raise Exception("Interface {} is managed by network manager and we cannot work with that, \
                 as we do not want to touch user leve stuff")
+    attempts=0
+    while attempts <= 3:
+        if doesIPInterfaceExist(args.interface):
+            if not isIPInterfaceUp(args.interface):
+                bringIPInterfaceUp(args.interface)
 
-    if doesIPInterfaceExist(args.interface):
-        if not isIPInterfaceUp(args.interface):
-            bringIPInterfaceUp(args.interface)
 
+            flushIPInterface(args.interface)
+            configureIPInterface(args.interface, args.ip, args.broadcast_ip)
+            setSYSCTLIPV4Forwarding()
+            setIPTablesNat()
+            return
+        else:
+            attempts += 1
+            print("trying again attempt {}/3".format(attempts))
+            time.sleep(2)
 
-        flushIPInterface(args.interface)
-        configureIPInterface(args.interface, args.ip, args.broadcast_ip)
-        setSYSCTLIPV4Forwarding()
-        setIPTablesNat()
-    else:
-        raise Exception("IP Interface does not exist")
+    raise Exception("IP Interface does not exist")
 
 def configureInterfaceDown(args):
     print(args)
