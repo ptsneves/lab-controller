@@ -115,10 +115,11 @@
     "communications" : {
     }
   },
-  "odroid-xu4" : {
+  "imx6-tinyrexpro" : {
     "power" : [
       {
-        "type" : "optional"
+        "type" : "optional",
+        "id" : "imx6-tinyrexpro-before-power"
       },
       {
         "type" : "serial",
@@ -157,7 +158,7 @@
       },
       {
         "type" : "optional",
-        "id" : "odroid-after-power"
+        "id" : "imx6-tinyrexpro-after-power"
       }
     ],
     "communications" : [
