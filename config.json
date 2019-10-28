@@ -29,8 +29,19 @@
         "type" : "group",
         "devices" : [
           "ardupilot-simulator",
-          "socketio-simulator",
           "virt-arm"
+        ]
+      }
+    ]
+  },
+  "drotagcloud-test" : {
+    "power" : [
+      {
+        "type" : "group",
+        "devices" : [
+          "camera",
+          "ardupilot-simulator",
+          "imx6-tinyrexpro"
         ]
       }
     ]
