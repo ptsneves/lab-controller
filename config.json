@@ -197,6 +197,21 @@
         "usb-port" : "4"
       },
       {
+        "type": "host",
+        "command": {
+          "on": [
+            {
+              "execute": "sleep 4 # Required because the usb of the arietta needs to be stabilized."
+            }
+          ],
+          "off": [
+            {
+              "execute": "true"
+            }
+          ]
+        }
+      },
+      {
         "type" : "optional",
         "id" : "arietta-after-power"
       }
