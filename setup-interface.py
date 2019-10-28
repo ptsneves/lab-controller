@@ -140,6 +140,10 @@ def getGatewayDevice():
     if not isZeroExitCode(res):
         raise Exception("Could not retrieve default route. Error:\n{}".format(res["stderr"]))
 
+    if not res["stdout"]:
+        raise Exception("Could get gateway because there seems to not"
+            "be any gateway device connected to the internet.")
+
     split = res["stdout"][0].split()
     for i in range(0, len(split)):
         if split[i] == "dev" and i + 1 < len(split):
